@@ -2,6 +2,8 @@
 
 These notes rewrite the solver-relevant equations from Sections 2.3, 2.6, and 2.7 of the paper.
 
+> REVIEW-PDF: delete each `REVIEW-PDF` note after checking the marked equation against the article scan.
+
 ## Matrix Matching Equations
 
 Paper eqs. (6a)-(6d):
@@ -53,6 +55,9 @@ J = J_n(h r_m),
 \qquad
 K = K_n(p r_m),
 $$
+
+> REVIEW-PDF: this line may not belong as a standalone definition in the paper. The matrix elements seem to use the scaled quantities in the next line instead.
+> Check whether the article actually defines raw derivatives here, or only the divided forms `J_n'(h r_m)/h` and `K_n'(p r_m)/p`.
 
 $$
 J' = J_n'(h r_m),
@@ -178,6 +183,9 @@ $$
 
 From eq. (3), the paper writes
 
+> REVIEW-PDF: check the sign of the prefactor in eq. (9).
+> The current line below uses `(k_z^2 - k^2)/k_z^2`, but the scan previously looked like `(k^2 - k_z^2)/k_z^2`.
+
 $$
 E_t \cdot H_t = \frac{k_z^2 - k^2}{k_z^2} ( \frac{\partial H_z}{\partial r}\frac{\partial E_z}{\partial r} + \frac{1}{r^2} \frac{\partial H_z}{\partial \theta} \frac{\partial E_z}{\partial \theta}).
 $$
@@ -214,6 +222,9 @@ $$
 $$
 
 paper eq. (13):
+
+> REVIEW-PDF: the exponent on the right-hand side is suspicious here.
+> I expect the paper to read `n_r = k_1/k_0`, not `n_r = (k_1/k_0)^{1/2}`.
 
 $$
 n_r = \frac{k_1}{k_0}^{1/2},
@@ -299,6 +310,9 @@ The paper states:
 To control overflow/underflow, the paper notes that rows or columns of the determinant may be multiplied by positive functions without shifting the zeros.
 
 The text specifically says that a brute-force scaling was used:
+
+> REVIEW-PDF: these two scaling formulas are still uncertain and should be checked directly in the scan before we trust them in the implementation notes.
+> In particular, verify whether the numerator really includes the extra factor `d`, and confirm the exact denominator arguments.
 
 - Bessel terms multiplied by
 
