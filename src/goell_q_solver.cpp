@@ -86,6 +86,10 @@ struct Params
 
     // "det" segue a eq. (19); "sv" e apenas um auxiliar numerico.
     string metric = "det";
+    // Para metric=det:
+    // - "minima" reproduz o fluxo exploratorio atual, baseado em vales de log|det|
+    // - "sign" procura raizes por mudanca de sinal de det(Q), mais proximo da Sec. 2.7.1
+    string det_search = "minima";
 
     // Exporta todos os minimos locais refinados em cada B.
     // branch_id aqui e so o indice local do minimo em cada B.
@@ -104,6 +108,7 @@ struct Params
     // Modo de diagnostico: exporta a varredura bruta de P' para um unico B.
     bool dump_scan = false;
     double dump_B = 0.0;
+    bool dump_det_sign = false;
 };
 
 struct ColumnLayout
@@ -131,6 +136,20 @@ struct Sample
     double B = 0.0;
     double Pprime = 0.0; // no paper, rho^2 da eq. (11)
     double merit = 0.0;
+};
+
+struct DeterminantInfo
+{
+    double logabs = -INFINITY;
+    int sign = 0;
+};
+
+struct DetSample
+{
+    double B = 0.0;
+    double Pprime = 0.0;
+    double merit = 0.0;
+    int sign = 0;
 };
 
 inline double Jn(int n, double x) { return std::cyl_bessel_j(n, x); }
@@ -658,6 +677,38 @@ static double logabs_det(const MatrixXd &Q)
     return s;
 }
 
+static DeterminantInfo determinant_info(const MatrixXd &Q)
+{
+    FullPivLU<MatrixXd> lu(Q);
+    const auto &LU = lu.matrixLU();
+
+    DeterminantInfo info;
+    info.logabs = 0.0;
+
+    // det(Q) = det(P)^-1 det(LU) det(Qperm)^-1.
+    // Como as permutacoes tem determinante +-1, basta acompanhar o sinal.
+    int sign = static_cast<int>(std::round(lu.permutationP().determinant() * lu.permutationQ().determinant()));
+    if (sign == 0)
+        sign = 1;
+
+    for (int i = 0; i < LU.rows(); ++i)
+    {
+        const double di = LU(i, i);
+        if (!isfinite(di) || fabs(di) <= 0.0)
+        {
+            info.logabs = -INFINITY;
+            info.sign = 0;
+            return info;
+        }
+
+        info.logabs += log(fabs(di));
+        sign *= (di < 0.0) ? -1 : 1;
+    }
+
+    info.sign = sign;
+    return info;
+}
+
 static double log10_sigma_rel(const MatrixXd &Q)
 {
     JacobiSVD<MatrixXd> svd(Q, ComputeThinU | ComputeThinV);
@@ -673,6 +724,11 @@ static double merit_value(const Params &P, double B, double Pprime)
     return (P.metric == "sv") ? log10_sigma_rel(Q) : logabs_det(Q);
 }
 
+static DeterminantInfo determinant_value(const Params &P, double B, double Pprime)
+{
+    return determinant_info(assemble_Q(P, B, Pprime));
+}
+
 static vector<Sample> scan_P(const Params &P, double B)
 {
     vector<Sample> out;
@@ -684,6 +740,21 @@ static vector<Sample> scan_P(const Params &P, double B)
         // Usamos pontos estritamente interiores para evitar "minimos" artificiais nas bordas.
         const double Pprime = (i + 1.0) / double(P.Pscan + 1);
         out.push_back({B, Pprime, merit_value(P, B, Pprime)});
+    }
+
+    return out;
+}
+
+static vector<DetSample> scan_P_det(const Params &P, double B)
+{
+    vector<DetSample> out;
+    out.reserve(P.Pscan);
+
+    for (int i = 0; i < P.Pscan; ++i)
+    {
+        const double Pprime = (i + 1.0) / double(P.Pscan + 1);
+        const auto info = determinant_value(P, B, Pprime);
+        out.push_back({B, Pprime, info.logabs, info.sign});
     }
 
     return out;
@@ -721,6 +792,75 @@ static vector<Sample> edge_minima(const vector<Sample> &samples)
         mins.push_back(samples.back());
 
     return mins;
+}
+
+static vector<Sample> sign_change_roots(const Params &P, double B, const vector<DetSample> &samples)
+{
+    vector<Sample> roots;
+    if (samples.size() < 2)
+        return roots;
+
+    auto append_unique = [&](double pref)
+    {
+        const double clamped = min(1.0 - 1e-6, max(1e-6, pref));
+        if (!roots.empty() && fabs(roots.back().Pprime - clamped) < 1e-5)
+            return;
+        const auto info = determinant_value(P, B, clamped);
+        roots.push_back({B, clamped, info.logabs});
+    };
+
+    for (size_t i = 0; i + 1 < samples.size(); ++i)
+    {
+        const auto &left = samples[i];
+        const auto &right = samples[i + 1];
+
+        if (left.sign == 0)
+        {
+            append_unique(left.Pprime);
+            continue;
+        }
+
+        if (left.sign != 0 && right.sign != 0 && left.sign != right.sign)
+        {
+            double a = left.Pprime;
+            double b = right.Pprime;
+            int sa = left.sign;
+            int sb = right.sign;
+
+            for (int it = 0; it < 50; ++it)
+            {
+                const double mid = 0.5 * (a + b);
+                const auto info_mid = determinant_value(P, B, mid);
+
+                if (info_mid.sign == 0)
+                {
+                    a = b = mid;
+                    break;
+                }
+
+                if (sa != 0 && sa != info_mid.sign)
+                {
+                    b = mid;
+                    sb = info_mid.sign;
+                }
+                else if (sb != 0 && sb != info_mid.sign)
+                {
+                    a = mid;
+                    sa = info_mid.sign;
+                }
+                else
+                {
+                    // Se o sinal no ponto medio nao ajuda a manter um bracket limpo,
+                    // paramos aqui e usamos o centro do intervalo atual.
+                    break;
+                }
+            }
+
+            append_unique(0.5 * (a + b));
+        }
+    }
+
+    return roots;
 }
 
 static double refine_local_minimum(const Params &P, double B, double x0)
@@ -788,6 +928,13 @@ static PhaseFamily parse_phase(const string &value)
     throw runtime_error("phase invalida; use phi0 ou phi90");
 }
 
+static string parse_det_search_mode(const string &value)
+{
+    if (value == "minima" || value == "sign")
+        return value;
+    throw runtime_error("det-search invalido; use minima ou sign");
+}
+
 static BoundaryGeometryMode parse_geometry_mode(const string &value)
 {
     if (value == "literal")
@@ -835,6 +982,12 @@ static void parse_args(int argc, char **argv, Params &P)
             next_int(P.Pscan);
         else if (arg == "--metric")
             next_string(P.metric);
+        else if (arg == "--det-search")
+        {
+            string value;
+            next_string(value);
+            P.det_search = parse_det_search_mode(value);
+        }
         else if (arg == "--parity")
         {
             string value;
@@ -862,6 +1015,8 @@ static void parse_args(int argc, char **argv, Params &P)
             P.dump_scan = true;
             next_double(P.dump_B);
         }
+        else if (arg == "--dump-det-sign")
+            P.dump_det_sign = true;
         else if (arg == "--rescale")
             P.rescale_matrix = true;
         else if (arg == "--no-rescale")
@@ -895,12 +1050,26 @@ int main(int argc, char **argv)
 
     if (P.dump_scan)
     {
-        cout << "B,Pprime,merit,parity,phase,geometry\n";
+        if (P.dump_det_sign && P.metric == "det")
+            cout << "B,Pprime,merit,det_sign,parity,phase,geometry\n";
+        else
+            cout << "B,Pprime,merit,parity,phase,geometry\n";
+
         for (const auto &sample : scan_P(P, P.dump_B))
         {
-            cout << sample.B << "," << sample.Pprime << "," << sample.merit << ","
-                 << parity_name(P.parity) << "," << phase_name(P.phase) << ","
-                 << geometry_name(P.geometry_mode) << "\n";
+            if (P.dump_det_sign && P.metric == "det")
+            {
+                const auto info = determinant_info(assemble_Q(P, sample.B, sample.Pprime));
+                cout << sample.B << "," << sample.Pprime << "," << sample.merit << ","
+                     << info.sign << "," << parity_name(P.parity) << "," << phase_name(P.phase) << ","
+                     << geometry_name(P.geometry_mode) << "\n";
+            }
+            else
+            {
+                cout << sample.B << "," << sample.Pprime << "," << sample.merit << ","
+                     << parity_name(P.parity) << "," << phase_name(P.phase) << ","
+                     << geometry_name(P.geometry_mode) << "\n";
+            }
         }
         return 0;
     }
@@ -909,7 +1078,9 @@ int main(int argc, char **argv)
 
     for (int iB = 0; iB <= P.NB; ++iB)
     {
-        const double B = P.B_min + (P.B_max - P.B_min) * double(iB) / double(P.NB);
+        const double B = (P.NB <= 0)
+                             ? P.B_min
+                             : P.B_min + (P.B_max - P.B_min) * double(iB) / double(P.NB);
 
         // Em B=0 as eqs. (14)-(15) colapsam para hr=pr=0, o que torna a busca por
         // minimos locais numericamente degenerada. Mantemos o eixo do grafico iniciando
@@ -917,26 +1088,40 @@ int main(int argc, char **argv)
         if (fabs(B) < 1e-12)
             continue;
 
-        auto coarse = scan_P(P, B);
-        auto mins = local_minima(coarse);
-        if (P.allow_edge_minima)
+        vector<Sample> candidates;
+        if (P.metric == "det" && P.det_search == "sign")
         {
-            auto e = edge_minima(coarse);
-            mins.insert(mins.end(), e.begin(), e.end());
+            const auto det_scan = scan_P_det(P, B);
+            candidates = sign_change_roots(P, B, det_scan);
         }
-        sort(mins.begin(), mins.end(), [](const Sample &a, const Sample &b)
-             { return a.Pprime < b.Pprime; });
-
-        if (!P.all_minima && !mins.empty())
+        else
         {
-            mins = {*min_element(mins.begin(), mins.end(), [](const Sample &a, const Sample &b)
-                                 { return a.merit < b.merit; })};
+            auto coarse = scan_P(P, B);
+            candidates = local_minima(coarse);
+            if (P.allow_edge_minima)
+            {
+                auto e = edge_minima(coarse);
+                candidates.insert(candidates.end(), e.begin(), e.end());
+            }
+            sort(candidates.begin(), candidates.end(), [](const Sample &a, const Sample &b)
+                 { return a.Pprime < b.Pprime; });
+
+            if (!P.all_minima && !candidates.empty())
+            {
+                candidates = {*min_element(candidates.begin(), candidates.end(), [](const Sample &a, const Sample &b)
+                                           { return a.merit < b.merit; })};
+            }
         }
 
-        for (size_t k = 0; k < mins.size(); ++k)
+        for (size_t k = 0; k < candidates.size(); ++k)
         {
-            const double pref = refine_local_minimum(P, B, mins[k].Pprime);
-            const double merit = merit_value(P, B, pref);
+            double pref = candidates[k].Pprime;
+            double merit = candidates[k].merit;
+            if (!(P.metric == "det" && P.det_search == "sign"))
+            {
+                pref = refine_local_minimum(P, B, pref);
+                merit = merit_value(P, B, pref);
+            }
             cout << k << "," << B << "," << pref << "," << merit << ","
                  << parity_name(P.parity) << "," << phase_name(P.phase) << ","
                  << geometry_name(P.geometry_mode) << "\n";

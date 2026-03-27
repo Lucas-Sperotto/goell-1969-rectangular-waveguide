@@ -79,6 +79,7 @@ NB="${NB:-40}"
 PSCAN="${PSCAN:-160}"
 # Para comparacao com o paper, o criterio por determinante fica mais fiel a eq. (19).
 METRIC="${METRIC:-det}"
+DET_SEARCH="${DET_SEARCH:-minima}"
 ALL_MINIMA="${ALL_MINIMA:-1}"
 PLOT_MERIT_MAX="${PLOT_MERIT_MAX:-}"
 RESCALE_MATRIX="${RESCALE_MATRIX:-auto}"
@@ -104,10 +105,12 @@ run_case() {
   local outfile="$4"
 
   local n nb pscan metric rescale_mode geometry_mode
+  local det_search
   n="$(case_value "$prefix" N "$N")"
   nb="$(case_value "$prefix" NB "$NB")"
   pscan="$(case_value "$prefix" PSCAN "$PSCAN")"
   metric="$(case_value "$prefix" METRIC "$METRIC")"
+  det_search="$(case_value "$prefix" DET_SEARCH "$DET_SEARCH")"
   rescale_mode="$(case_value "$prefix" RESCALE_MATRIX "$RESCALE_MATRIX")"
   geometry_mode="$(case_value "$prefix" GEOMETRY_MODE "$GEOMETRY_MODE")"
 
@@ -123,6 +126,7 @@ run_case() {
     --NB "$nb"
     --Pscan "$pscan"
     --metric "$metric"
+    --det-search "$det_search"
   )
 
   if [ "$ALL_MINIMA" = "1" ]; then
@@ -176,6 +180,7 @@ echo "Figura: $FIGURE"
 echo "  a/b = $A_OVER_B"
 echo "  n_r = $NR"
 echo "  N = $N, NB = $NB, Pscan = $PSCAN, metric = $METRIC"
+echo "  DET_SEARCH = $DET_SEARCH"
 echo "  RESCALE_MATRIX = $RESCALE_MATRIX"
 echo "  GEOMETRY_MODE = $GEOMETRY_MODE"
 echo "Arquivos gerados:"
