@@ -50,6 +50,12 @@ enum class PhaseFamily
     phi90,
 };
 
+enum class BoundaryGeometryMode
+{
+    literal,
+    intersection,
+};
+
 enum class RowKind
 {
     ez_long,
@@ -76,6 +82,7 @@ struct Params
 
     HarmonicParity parity = HarmonicParity::odd;
     PhaseFamily phase = PhaseFamily::phi0;
+    BoundaryGeometryMode geometry_mode = BoundaryGeometryMode::literal;
 
     // "det" segue a eq. (19); "sv" e apenas um auxiliar numerico.
     string metric = "det";
@@ -151,6 +158,11 @@ static string parity_name(HarmonicParity parity)
 static string phase_name(PhaseFamily phase)
 {
     return (phase == PhaseFamily::phi0) ? "phi0" : "phi90";
+}
+
+static string geometry_name(BoundaryGeometryMode mode)
+{
+    return (mode == BoundaryGeometryMode::literal) ? "literal" : "intersection";
 }
 
 static vector<int> odd_orders(int N)
@@ -240,9 +252,13 @@ static ColumnLayout build_layout(const Params &P)
 // - normalizamos por b, logo o retangulo fica em
 //     x in [-a/(2b), +a/(2b)] = [-a_over_b/2, +a_over_b/2]
 //     y in [-1/2, +1/2]
-// - os valores retornados aqui seguem diretamente o que foi consolidado nos
-//   arquivos docs/goell_01_field_expansions.md e docs/goell_02_matrix_and_normalization.md
-static BoundaryPoint boundary_point(double theta, double a_over_b)
+//
+// geometry_mode:
+// - literal: segue literalmente a leitura consolidada nos .md
+// - intersection: usa a intersecao geometrica da reta radial com a fronteira
+//   do retangulo, isto e, sec/csc. Este modo existe para validacao numerica,
+//   pois ele parece mais consistente com a geometria da Fig. 2.
+static BoundaryPoint boundary_point(double theta, double a_over_b, BoundaryGeometryMode geometry_mode)
 {
     const double theta_c = atan(1.0 / a_over_b);
 
@@ -251,19 +267,35 @@ static BoundaryPoint boundary_point(double theta, double a_over_b)
 
     if (theta < theta_c)
     {
-        // Lado vertical segundo as notas revisadas do paper:
-        //   r_m = (a/2) cos(theta_m), R = sin(theta_m), T = cos(theta_m)
-        // Como o solver trabalha com r_m / b, fica (a_over_b / 2) * cos(theta_m).
-        bp.r = (0.5 * a_over_b) * cos(theta);
+        if (geometry_mode == BoundaryGeometryMode::literal)
+        {
+            // Leitura literal consolidada nos .md:
+            //   r_m = (a/2) cos(theta_m)
+            bp.r = (0.5 * a_over_b) * cos(theta);
+        }
+        else
+        {
+            // Intersecao com o lado vertical x = a/2:
+            //   r_m cos(theta_m) = a/2  =>  r_m = (a/2) sec(theta_m)
+            bp.r = (0.5 * a_over_b) / cos(theta);
+        }
         bp.R = sin(theta);
         bp.T = cos(theta);
     }
     else
     {
-        // Lado horizontal segundo as notas revisadas do paper:
-        //   r_m = (b/2) sin(theta_m), R = -cos(theta_m), T = sin(theta_m)
-        // Normalizado por b, isso vira 0.5 * sin(theta_m).
-        bp.r = 0.5 * sin(theta);
+        if (geometry_mode == BoundaryGeometryMode::literal)
+        {
+            // Leitura literal consolidada nos .md:
+            //   r_m = (b/2) sin(theta_m)
+            bp.r = 0.5 * sin(theta);
+        }
+        else
+        {
+            // Intersecao com o lado horizontal y = b/2:
+            //   r_m sin(theta_m) = b/2  =>  r_m = (b/2) csc(theta_m)
+            bp.r = 0.5 / sin(theta);
+        }
         bp.R = -cos(theta);
         bp.T = sin(theta);
     }
@@ -554,7 +586,7 @@ static MatrixXd assemble_Q(const Params &P, double B, double Pprime)
         int row = 0;
         for (double theta : thetas)
         {
-            const auto bp = boundary_point(theta, P.a_over_b);
+            const auto bp = boundary_point(theta, P.a_over_b, P.geometry_mode);
             append_row(Q, row++, RowKind::ez_long, L, P, bp, kz_over_k0, h_scaled, p_scaled); // eq. (6a)
             append_row(Q, row++, RowKind::hz_long, L, P, bp, kz_over_k0, h_scaled, p_scaled); // eq. (6b)
             append_row(Q, row++, RowKind::et_tan, L, P, bp, kz_over_k0, h_scaled, p_scaled);  // eq. (6c)
@@ -594,7 +626,7 @@ static MatrixXd assemble_Q(const Params &P, double B, double Pprime)
 
             for (double theta : *thetas)
             {
-                const auto bp = boundary_point(theta, P.a_over_b);
+                const auto bp = boundary_point(theta, P.a_over_b, P.geometry_mode);
                 append_row(Q, row++, kind, L, P, bp, kz_over_k0, h_scaled, p_scaled);
             }
         }
@@ -756,6 +788,15 @@ static PhaseFamily parse_phase(const string &value)
     throw runtime_error("phase invalida; use phi0 ou phi90");
 }
 
+static BoundaryGeometryMode parse_geometry_mode(const string &value)
+{
+    if (value == "literal")
+        return BoundaryGeometryMode::literal;
+    if (value == "intersection" || value == "secant")
+        return BoundaryGeometryMode::intersection;
+    throw runtime_error("geometry invalida; use literal ou intersection");
+}
+
 static void parse_args(int argc, char **argv, Params &P)
 {
     for (int i = 1; i < argc; ++i)
@@ -806,6 +847,12 @@ static void parse_args(int argc, char **argv, Params &P)
             next_string(value);
             P.phase = parse_phase(value);
         }
+        else if (arg == "--geometry")
+        {
+            string value;
+            next_string(value);
+            P.geometry_mode = parse_geometry_mode(value);
+        }
         else if (arg == "--all-minima")
             P.all_minima = true;
         else if (arg == "--allow-edge-minima")
@@ -848,16 +895,17 @@ int main(int argc, char **argv)
 
     if (P.dump_scan)
     {
-        cout << "B,Pprime,merit,parity,phase\n";
+        cout << "B,Pprime,merit,parity,phase,geometry\n";
         for (const auto &sample : scan_P(P, P.dump_B))
         {
             cout << sample.B << "," << sample.Pprime << "," << sample.merit << ","
-                 << parity_name(P.parity) << "," << phase_name(P.phase) << "\n";
+                 << parity_name(P.parity) << "," << phase_name(P.phase) << ","
+                 << geometry_name(P.geometry_mode) << "\n";
         }
         return 0;
     }
 
-    cout << "branch_id,B,Pprime,merit,parity,phase\n";
+    cout << "branch_id,B,Pprime,merit,parity,phase,geometry\n";
 
     for (int iB = 0; iB <= P.NB; ++iB)
     {
@@ -890,7 +938,8 @@ int main(int argc, char **argv)
             const double pref = refine_local_minimum(P, B, mins[k].Pprime);
             const double merit = merit_value(P, B, pref);
             cout << k << "," << B << "," << pref << "," << merit << ","
-                 << parity_name(P.parity) << "," << phase_name(P.phase) << "\n";
+                 << parity_name(P.parity) << "," << phase_name(P.phase) << ","
+                 << geometry_name(P.geometry_mode) << "\n";
         }
     }
 

@@ -77,10 +77,13 @@ BMAX="${BMAX:-4}"
 N="${N:-5}"
 NB="${NB:-40}"
 PSCAN="${PSCAN:-160}"
-METRIC="${METRIC:-sv}"
+# Para comparacao com o paper, o criterio por determinante fica mais fiel a eq. (19).
+METRIC="${METRIC:-det}"
 ALL_MINIMA="${ALL_MINIMA:-1}"
 PLOT_MERIT_MAX="${PLOT_MERIT_MAX:-}"
 RESCALE_MATRIX="${RESCALE_MATRIX:-auto}"
+# A leitura "intersection" da fronteira reproduziu melhor a Tabela I do paper.
+GEOMETRY_MODE="${GEOMETRY_MODE:-intersection}"
 
 if [ -z "$PLOT_MERIT_MAX" ] && [ "$METRIC" = "sv" ]; then
   PLOT_MERIT_MAX="-8"
@@ -100,16 +103,18 @@ run_case() {
   local phase="$3"
   local outfile="$4"
 
-  local n nb pscan metric rescale_mode
+  local n nb pscan metric rescale_mode geometry_mode
   n="$(case_value "$prefix" N "$N")"
   nb="$(case_value "$prefix" NB "$NB")"
   pscan="$(case_value "$prefix" PSCAN "$PSCAN")"
   metric="$(case_value "$prefix" METRIC "$METRIC")"
   rescale_mode="$(case_value "$prefix" RESCALE_MATRIX "$RESCALE_MATRIX")"
+  geometry_mode="$(case_value "$prefix" GEOMETRY_MODE "$GEOMETRY_MODE")"
 
   local args=(
     --parity "$parity"
     --phase "$phase"
+    --geometry "$geometry_mode"
     --a_over_b "$A_OVER_B"
     --nr "$NR"
     --N "$n"
@@ -172,6 +177,7 @@ echo "  a/b = $A_OVER_B"
 echo "  n_r = $NR"
 echo "  N = $N, NB = $NB, Pscan = $PSCAN, metric = $METRIC"
 echo "  RESCALE_MATRIX = $RESCALE_MATRIX"
+echo "  GEOMETRY_MODE = $GEOMETRY_MODE"
 echo "Arquivos gerados:"
 echo "  $ODD_PHI0_CSV"
 echo "  $ODD_PHI90_CSV"
