@@ -38,7 +38,7 @@ $$
 O angulo radial que enxerga esse canto e
 
 $$
-\theta_c = \tan^{-1}\!\left(\frac{b}{a}\right).
+\theta_c = \tan^{-1} \left(\frac{b}{a}\right).
 $$
 
 Comentario didatico: o artigo usa ao mesmo tempo coordenadas cartesianas e cilindricas. A fronteira fisica e retangular, mas a base funcional escolhida para os campos e circular. Essa tensao entre geometria da estrutura e geometria da expansao e o coracao do metodo.
@@ -52,17 +52,11 @@ Goell parte das componentes longitudinais `E_z` e `H_z`, porque, em meios isotro
 As componentes longitudinais no interior sao escritas como
 
 $$
-E_{z1} =
-\sum_{n=0}^{\infty}
-a_n J_n(h r)\,\sin(n\theta + \phi_n)\,
-e^{i(k_z z - \omega t)},
+E_{z1} = \sum_{n=0}^{\infty} a_n J_n(h r)\sin(n\theta + \phi_n) e^{i(k_z z - \omega t)},
 $$
 
 $$
-H_{z1} =
-\sum_{n=0}^{\infty}
-b_n J_n(h r)\,\sin(n\theta + \psi_n)\,
-e^{i(k_z z - \omega t)}.
+H_{z1} = \sum_{n=0}^{\infty} b_n J_n(h r) \sin(n\theta + \psi_n) e^{i(k_z z - \omega t)}.
 $$
 
 ### Fora do nucleo
@@ -70,17 +64,11 @@ $$
 No meio externo, as expansoes passam a ser
 
 $$
-E_{z0} =
-\sum_{n=0}^{\infty}
-c_n K_n(p r)\,\sin(n\theta + \phi_n)\,
-e^{i(k_z z - \omega t)},
+E_{z0} = \sum_{n=0}^{\infty} c_n K_n(p r) \sin(n\theta + \phi_n) e^{i(k_z z - \omega t)},
 $$
 
 $$
-H_{z0} =
-\sum_{n=0}^{\infty}
-d_n K_n(p r)\,\sin(n\theta + \psi_n)\,
-e^{i(k_z z - \omega t)}.
+H_{z0} = \sum_{n=0}^{\infty} d_n K_n(p r) \sin(n\theta + \psi_n) e^{i(k_z z - \omega t)}.
 $$
 
 As constantes transversais sao
@@ -111,14 +99,7 @@ Comentario didatico: este e o primeiro grande acerto do metodo. O artigo nao esc
 As componentes transversais sao obtidas das equacoes de Maxwell. O artigo escreve
 
 $$
-E_r =
-\frac{i k_z}{k^2 - k_z^2}
-\left[
-\frac{\partial E_z}{\partial r}
-+
-\frac{\mu_0 \omega}{k_z r}
-\frac{\partial H_z}{\partial \theta}
-\right],
+E_r = \frac{i k_z}{k^2 - k_z^2} \left[ \frac{\partial E_z}{\partial r} + (\frac{\mu_0 \omega} {k_z r}) \frac{\partial H_z}{\partial \theta} \right],
 $$
 
 $$
@@ -137,7 +118,7 @@ H_r =
 \frac{i k_z}{k^2 - k_z^2}
 \left[
 -
-\frac{k^2}{\mu_0 \omega k_z r}
+(\frac{k^2}{\mu_0 \omega k_z r})
 \frac{\partial E_z}{\partial \theta}
 +
 \frac{\partial H_z}{\partial r}
@@ -148,7 +129,7 @@ $$
 H_{\theta} =
 \frac{i k_z}{k^2 - k_z^2}
 \left[
-\frac{k^2}{\mu_0 \omega k_z}
+(\frac{k^2}{\mu_0 \omega k_z})
 \frac{\partial E_z}{\partial r}
 +
 \frac{1}{r}\frac{\partial H_z}{\partial \theta}
