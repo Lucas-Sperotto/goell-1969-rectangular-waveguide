@@ -487,6 +487,10 @@ $$
 \Omega = r k_0 \sqrt{n_r^2 - 1}.
 $$
 
+$$
+n_r = \sqrt{(k_1/k_0)}.
+$$
+
 Com isso, os argumentos das funcoes especiais podem ser reescritos como
 
 $$
