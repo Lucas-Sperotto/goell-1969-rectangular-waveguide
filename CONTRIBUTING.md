@@ -19,7 +19,7 @@ O objetivo do projeto e reproduzir, com clareza, rastreabilidade e fidelidade, o
 - Preserve a rastreabilidade entre fisica, matematica, implementacao e documentacao.
 - Preserve o nucleo numerico em `C++17`, sem dependencias desnecessarias.
 - Garanta que o fluxo principal continue exportando resultados numericos em `out/` e figuras em `figures/`.
-- Use os utilitarios Python em `src/` para plotagem, reproducao e diagnostico.
+- Use os utilitarios Python em `scripts/` para plotagem, reproducao e diagnostico.
 - Registre, sempre que possivel, quais equacoes, figuras ou tabelas do artigo cada modulo implementa.
 
 ## Estrutura esperada
@@ -30,8 +30,9 @@ O objetivo do projeto e reproduzir, com clareza, rastreabilidade e fidelidade, o
 - `docs/referencias/`: notas auxiliares permanentes do repositorio.
 - `run.sh`: interface publica para build, reproducao e validacao.
 - `src/goell_q_solver.cpp`: solver principal.
-- `src/*.py`: utilitarios de reproducao, validacao e plotagem.
+- `scripts/*.py`: utilitarios de reproducao, validacao e plotagem.
 - `src/presets.sh`: shim de compatibilidade para o fluxo antigo.
+- `memory/`: refatoracao C++ modular experimental, ainda fora do build oficial.
 - `build/`, `out/` e `figures/`: artefatos gerados localmente.
 
 ## Estilo de edicao
@@ -50,7 +51,7 @@ Os comandos principais do fluxo atual sao:
 ./run.sh fig16
 ./run.sh fig20
 ./run.sh validate
-python3 -m py_compile src/plot_compare.py src/reproduce_table1.py src/analyze_table1_variation.py src/validate_goell.py src/track_roots.py src/principal_modes.py src/sweep_principal_modes.py
+python3 -m py_compile scripts/plot_compare.py scripts/reproduce_table1.py scripts/analyze_table1_variation.py scripts/validate_goell.py scripts/track_roots.py scripts/principal_modes.py scripts/sweep_principal_modes.py scripts/solver_api.py scripts/validate_bessel.py
 ```
 
 Se a sua mudanca mexer na camada numerica ou nos scripts, rode ao menos o build e a verificacao mais proxima do trecho afetado.

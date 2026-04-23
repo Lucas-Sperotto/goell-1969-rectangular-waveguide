@@ -26,7 +26,7 @@
 //   g++ -O3 -std=c++17 -I /usr/include/eigen3 src/goell_q_solver.cpp -o build/goell_q_solver
 //
 // Exemplo:
-//   ./build/goell_q_solver --parity odd --phase phi0 --a_over_b 1 --nr 1.01 \
+//   ./build/goell_q_solver --parity odd --phase phi0 --a_over_b 1 --nr 1.01
 //       --N 5 --Bmin 0.1 --Bmax 4 --NB 40 --Pscan 160 --metric det > out.csv
 
 #include <bits/stdc++.h>
@@ -116,6 +116,13 @@ struct Params
     bool dump_scan = false;
     double dump_B = 0.0;
     bool dump_det_sign = false;
+
+    // Modo de teste: exporta tabela de J_n, K_n e suas derivadas em pontos conhecidos.
+    bool test_bessel = false;
+
+    // Calcula o vetor nulo de Q em cada raiz via JacobiSVD.
+    // Adiciona colunas Ez_frac, Hz_frac e mode_class ao CSV principal.
+    bool null_vector = false;
 };
 
 struct ColumnLayout
@@ -157,6 +164,13 @@ struct DetSample
     double Pprime = 0.0;
     double merit = 0.0;
     int sign = 0;
+};
+
+struct NullInfo
+{
+    double ez_frac = 0.5;   // fracao da energia do vetor nulo nos blocos Ez (A e C)
+    double hz_frac = 0.5;   // fracao da energia do vetor nulo nos blocos Hz (B e D)
+    string mode_class = "hybrid"; // "EH", "HE" ou "hybrid"
 };
 
 inline double Jn(int n, double x) { return std::cyl_bessel_j(n, x); }
@@ -398,11 +412,6 @@ static RowKind odd_z_row_kind(PhaseFamily phase)
     return (phase == PhaseFamily::phi0) ? RowKind::ez_long : RowKind::hz_long;
 }
 
-static double clamp_nonnegative(double x)
-{
-    return (x < 0.0) ? 0.0 : x;
-}
-
 static double safe_denominator(double x)
 {
     return (x < EPS) ? EPS : x;
@@ -470,25 +479,26 @@ static void fill_ez_columns(
         // Em coordenadas normalizadas por b, essas grandezas ficam proporcionais
         // as expressoes abaixo. Fatores globais comuns sao absorvidos pelo
         // reescalonamento das linhas/colunas sem mover os zeros de det(Q).
-        const double JprimeRaw = Jn_prime(n, hr);
-        const double JbarPrime = JprimeRaw / safe_denominator(h_scaled);
-        const double KbarPrime = Kn_prime(n, pr) / safe_denominator(p_scaled);
-        const double Jbar = (n == 0) ? 0.0 : (n * J0) / (safe_denominator(h_scaled * h_scaled) * bp.r);
-        const double Kbar = (n == 0) ? 0.0 : (n * K0) / (safe_denominator(p_scaled * p_scaled) * bp.r);
+        // Notacao da doc (02_matriz_global_e_normalizacao.md, Sec. 2):
+        //   Jr  = J'_n(hr) / h            ("J_r"  no artigo)
+        //   Jth = n * J_n(hr) / (h^2 r)   ("J_θ"  no artigo)
+        //   Kr  = K'_n(pr) / p            ("K_r"  no artigo)
+        //   Kth = n * K_n(pr) / (p^2 r)   ("K_θ"  no artigo)
+        const double Jr  = Jn_prime(n, hr) / safe_denominator(h_scaled);
+        const double Kr  = Kn_prime(n, pr) / safe_denominator(p_scaled);
+        const double Jth = (n == 0) ? 0.0 : (n * J0) / (safe_denominator(h_scaled * h_scaled) * bp.r);
+        const double Kth = (n == 0) ? 0.0 : (n * K0) / (safe_denominator(p_scaled * p_scaled) * bp.r);
 
-        // Eqs. (7a), (7b), (7e), (7g), (7i), (7k)
+        // Eqs. (7a), (7e), (7i), (7k)
         const double eLA = J0 * S;
         const double eLC = K0 * S;
 
-        const double eTA = -kz_over_k0 * (JbarPrime * S * bp.R + Jbar * C * bp.T);
-        const double eTC = +kz_over_k0 * (KbarPrime * S * bp.R + Kbar * C * bp.T);
+        const double eTA = -kz_over_k0 * (Jr  * S * bp.R + Jth * C * bp.T);
+        const double eTC = +kz_over_k0 * (Kr  * S * bp.R + Kth * C * bp.T);
 
-        // Aqui trabalhamos com as linhas ja normalizadas por k0 e com Z0 fixado em 1,
-        // exatamente como permitido pela observacao da p. 2144.
-        // No bloco H^{TA}, o termo radial deve seguir a mesma forma escalada
-        // usada na formulacao compacta dos demais blocos tangenciais.
-        const double hTA = +eps_r * (Jbar * C * bp.R - JbarPrime * S * bp.T);
-        const double hTC = -(Kbar * C * bp.R - KbarPrime * S * bp.T);
+        // Fatores k0 e Z0 absorvidos pela normalizacao global (p. 2144).
+        const double hTA = +eps_r * (Jth * C * bp.R - Jr  * S * bp.T);
+        const double hTC = -(Kth * C * bp.R - Kr  * S * bp.T);
 
         const int colA = L.offset_A + i;
         const int colC = L.offset_C + i;
@@ -534,21 +544,24 @@ static void fill_hz_columns(
         const double J0 = Jn(n, hr);
         const double K0 = Kn(n, pr);
 
-        const double JbarPrime = Jn_prime(n, hr) / safe_denominator(h_scaled);
-        const double KbarPrime = Kn_prime(n, pr) / safe_denominator(p_scaled);
-        const double Jbar = (n == 0) ? 0.0 : (n * J0) / (safe_denominator(h_scaled * h_scaled) * bp.r);
-        const double Kbar = (n == 0) ? 0.0 : (n * K0) / (safe_denominator(p_scaled * p_scaled) * bp.r);
+        // Mesma notacao de fill_ez_columns (doc Sec. 2):
+        //   Jr  = J'_n(hr) / h,   Jth = n * J_n(hr) / (h^2 r)
+        //   Kr  = K'_n(pr) / p,   Kth = n * K_n(pr) / (p^2 r)
+        const double Jr  = Jn_prime(n, hr) / safe_denominator(h_scaled);
+        const double Kr  = Kn_prime(n, pr) / safe_denominator(p_scaled);
+        const double Jth = (n == 0) ? 0.0 : (n * J0) / (safe_denominator(h_scaled * h_scaled) * bp.r);
+        const double Kth = (n == 0) ? 0.0 : (n * K0) / (safe_denominator(p_scaled * p_scaled) * bp.r);
 
         // Eqs. (7c), (7d), (7f), (7h), (7j), (7l)
         const double hLB = J0 * C;
         const double hLD = K0 * C;
 
-        // De novo, os fatores k0 e Z0 foram absorvidos pela normalizacao global.
-        const double eTB = +(Jbar * S * bp.R + JbarPrime * C * bp.T);
-        const double eTD = -(Kbar * S * bp.R + KbarPrime * C * bp.T);
+        // Fatores k0 e Z0 absorvidos pela normalizacao global (p. 2144).
+        const double eTB = +(Jth * S * bp.R + Jr  * C * bp.T);
+        const double eTD = -(Kth * S * bp.R + Kr  * C * bp.T);
 
-        const double hTB = -kz_over_k0 * (JbarPrime * C * bp.R - Jbar * S * bp.T);
-        const double hTD = +kz_over_k0 * (KbarPrime * C * bp.R - Kbar * S * bp.T);
+        const double hTB = -kz_over_k0 * (Jr  * C * bp.R - Jth * S * bp.T);
+        const double hTD = +kz_over_k0 * (Kr  * C * bp.R - Kth * S * bp.T);
 
         const int colB = L.offset_B + i;
         const int colD = L.offset_D + i;
@@ -600,9 +613,11 @@ static MatrixXd assemble_Q(const Params &P, double B, double Pprime)
     const double eps_r = P.n_r * P.n_r;
     const double kz_over_k0 = sqrt(1.0 + (eps_r - 1.0) * Pprime);
 
-    const double radial_scale = PI * clamp_nonnegative(B);
-    const double h_scaled = radial_scale * sqrt(clamp_nonnegative(1.0 - Pprime));
-    const double p_scaled = radial_scale * sqrt(clamp_nonnegative(Pprime));
+    // Dominio fisico: B > 0, Pprime em (0,1).
+    // Os max() guardam contra ruido numerico nos extremos da varredura de P'.
+    const double radial_scale = PI * std::max(0.0, B);
+    const double h_scaled = radial_scale * sqrt(std::max(0.0, 1.0 - Pprime));
+    const double p_scaled = radial_scale * sqrt(std::max(0.0, Pprime));
 
     MatrixXd Q;
 
@@ -612,14 +627,20 @@ static MatrixXd assemble_Q(const Params &P, double B, double Pprime)
         const auto thetas = odd_case_thetas(P.N);
         Q = MatrixXd::Zero(4 * P.N, L.ncols);
 
+        // Montagem por bloco, espelhando a estrutura da eq. (18):
+        //   bloco Ez_long (N linhas): casamento de E_z nos N pontos
+        //   bloco Hz_long (N linhas): casamento de H_z
+        //   bloco Et_tan  (N linhas): casamento de E_t
+        //   bloco Ht_tan  (N linhas): casamento de H_t
+        // Cada bloco usa os mesmos N pontos de matching da Sec. 2.2.
         int row = 0;
-        for (double theta : thetas)
+        for (RowKind kind : {RowKind::ez_long, RowKind::hz_long, RowKind::et_tan, RowKind::ht_tan})
         {
-            const auto bp = boundary_point(theta, P.a_over_b, P.geometry_mode);
-            append_row(Q, row++, RowKind::ez_long, L, P, bp, kz_over_k0, h_scaled, p_scaled); // eq. (6a)
-            append_row(Q, row++, RowKind::hz_long, L, P, bp, kz_over_k0, h_scaled, p_scaled); // eq. (6b)
-            append_row(Q, row++, RowKind::et_tan, L, P, bp, kz_over_k0, h_scaled, p_scaled);  // eq. (6c)
-            append_row(Q, row++, RowKind::ht_tan, L, P, bp, kz_over_k0, h_scaled, p_scaled);  // eq. (6d)
+            for (double theta : thetas)
+            {
+                const auto bp = boundary_point(theta, P.a_over_b, P.geometry_mode);
+                append_row(Q, row++, kind, L, P, bp, kz_over_k0, h_scaled, p_scaled);
+            }
         }
     }
     else
@@ -739,6 +760,52 @@ static double log10_sigma_rel(const MatrixXd &Q)
     if (s.size() == 0 || s(0) <= 0.0)
         return 0.0;
     return log10(s.tail(1)(0) / s(0));
+}
+
+// Calcula as fracoes de energia Ez/Hz do vetor nulo de Q no ponto (B, Pprime).
+// O vetor nulo e o vetor singular direito associado ao menor valor singular de Q.
+// Ez_frac = ||v_A||^2 + ||v_C||^2, Hz_frac = ||v_B||^2 + ||v_D||^2 (normalizados).
+static NullInfo compute_null_info(const Params &P, double B, double Pprime)
+{
+    const ColumnLayout L = build_layout(P);
+    const MatrixXd Q = assemble_Q(P, B, Pprime);
+
+    JacobiSVD<MatrixXd> svd(Q, ComputeThinV);
+    // Valores singulares em ordem decrescente; a ultima coluna de V corresponde
+    // ao menor valor singular (proximo de zero na raiz de det(Q)=0).
+    const VectorXd v = svd.matrixV().col(Q.cols() - 1);
+
+    const int nA = static_cast<int>(L.ez_orders.size());
+    const int nB = static_cast<int>(L.hz_orders.size());
+
+    double ez_energy = 0.0;
+    for (int j = L.offset_A; j < L.offset_A + nA; ++j)
+        ez_energy += v(j) * v(j);
+    for (int j = L.offset_C; j < L.offset_C + nA; ++j)
+        ez_energy += v(j) * v(j);
+
+    double hz_energy = 0.0;
+    for (int j = L.offset_B; j < L.offset_B + nB; ++j)
+        hz_energy += v(j) * v(j);
+    for (int j = L.offset_D; j < L.offset_D + nB; ++j)
+        hz_energy += v(j) * v(j);
+
+    const double total = ez_energy + hz_energy;
+    NullInfo info;
+    if (total <= 0.0)
+        return info;
+
+    info.ez_frac = ez_energy / total;
+    info.hz_frac = hz_energy / total;
+
+    if (info.ez_frac > 0.7)
+        info.mode_class = "EH";
+    else if (info.hz_frac > 0.7)
+        info.mode_class = "HE";
+    else
+        info.mode_class = "hybrid";
+
+    return info;
 }
 
 static double merit_value(const Params &P, double B, double Pprime)
@@ -1059,6 +1126,10 @@ static void parse_args(int argc, char **argv, Params &P)
             P.rescale_matrix = true;
         else if (arg == "--no-rescale")
             P.rescale_matrix = false;
+        else if (arg == "--test-bessel")
+            P.test_bessel = true;
+        else if (arg == "--null-vector")
+            P.null_vector = true;
         else if (arg == "--family")
         {
             throw runtime_error(
@@ -1084,7 +1155,28 @@ int main(int argc, char **argv)
     }
 
     cout.setf(std::ios::fixed);
-    cout << setprecision(6);
+    cout << setprecision(15);
+
+    if (P.test_bessel)
+    {
+        // Exporta J_n, J'_n, K_n, K'_n em pontos de teste para validacao externa.
+        // Os zeros de J_n e as identidades de recorrencia sao verificados em
+        // src/validate_bessel.py usando scipy.special como referencia.
+        cout << "n,x,Jn,Jn_prime,Kn,Kn_prime\n";
+        const vector<pair<int,double>> pts = {
+            {0, 0.5}, {0, 1.0}, {0, 2.0}, {0, 2.4048255577},
+            {1, 0.5}, {1, 1.0}, {1, 2.0}, {1, 3.8317059702},
+            {2, 0.5}, {2, 1.0}, {2, 2.0},
+            {3, 1.0}, {3, 3.0},
+        };
+        for (const auto &[n, x] : pts)
+            cout << n << "," << x << ","
+                 << Jn(n, x) << "," << Jn_prime(n, x) << ","
+                 << Kn(n, x) << "," << Kn_prime(n, x) << "\n";
+        return 0;
+    }
+
+    cout.precision(6);
 
     if (P.dump_scan)
     {
@@ -1112,7 +1204,10 @@ int main(int argc, char **argv)
         return 0;
     }
 
-    cout << "branch_id,B,Pprime,merit,parity,phase,geometry\n";
+    if (P.null_vector)
+        cout << "branch_id,B,Pprime,merit,parity,phase,geometry,Ez_frac,Hz_frac,mode_class\n";
+    else
+        cout << "branch_id,B,Pprime,merit,parity,phase,geometry\n";
 
     for (int iB = 0; iB <= P.NB; ++iB)
     {
@@ -1162,7 +1257,13 @@ int main(int argc, char **argv)
             }
             cout << k << "," << B << "," << pref << "," << merit << ","
                  << parity_name(P.parity) << "," << phase_name(P.phase) << ","
-                 << geometry_name(P.geometry_mode) << "\n";
+                 << geometry_name(P.geometry_mode);
+            if (P.null_vector)
+            {
+                const NullInfo ni = compute_null_info(P, B, pref);
+                cout << "," << ni.ez_frac << "," << ni.hz_frac << "," << ni.mode_class;
+            }
+            cout << "\n";
         }
     }
 

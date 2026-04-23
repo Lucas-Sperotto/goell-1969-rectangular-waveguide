@@ -32,13 +32,11 @@ Este repositorio foi montado justamente para tornar esse caminho legivel, verifi
 - [run.sh](run.sh): interface publica oficial para build, Tabela I, Figs. 16-19, validacao e rodada completa.
 - [src/goell_q_solver.cpp](src/goell_q_solver.cpp): solver principal, com montagem da matriz `Q`, busca de raizes e exportacao das curvas.
 - [src/presets.sh](src/presets.sh): shim de compatibilidade para encaminhar chamadas antigas ao `run.sh`.
-- [src/plot_compare.py](src/plot_compare.py): plotador dos CSVs produzidos pelo solver.
-- [src/reproduce_table1.py](src/reproduce_table1.py): reproducao automatizada da Tabela I.
-- [src/analyze_table1_variation.py](src/analyze_table1_variation.py): diagnostico das fontes de variacao residual da Tabela I.
-- [src/validate_goell.py](src/validate_goell.py): exportacao e validacao por estabilidade em `N`, com relatorios e CSVs rastreados por continuidade em `B`.
-- [src/track_roots.py](src/track_roots.py): rastreamento de ramos por continuidade.
-- [src/principal_modes.py](src/principal_modes.py): seletor do ramo principal a partir dos CSVs rastreados.
-- [src/sweep_principal_modes.py](src/sweep_principal_modes.py): sweep dos dois modos principais para abrir o caminho das Figs. 20-22.
+- [scripts/](scripts): scripts Python e sh de pos-processamento, validacao, plotagem e orquestracao interna.
+- [scripts/solver_api.py](scripts/solver_api.py): interface centralizada para chamar `build/goell_q_solver`.
+- [scripts/validate_bessel.py](scripts/validate_bessel.py): validacao das funcoes de Bessel contra `scipy.special`.
+- [Makefile](Makefile): build alternativo para o solver oficial em `src/goell_q_solver.cpp`.
+- [memory/](memory): area de refatoracao modular em C++ ainda experimental; o solver oficial continua em `src/goell_q_solver.cpp`.
 
 ### Documentacao
 
@@ -104,6 +102,7 @@ No fluxo atual:
 - a interpretacao da fronteira por intersecao geometrica;
 - a reproducao automatizada da Tabela I com meta numerica objetiva;
 - o fluxo publico `sh -> C++ -> Python` para as Figs. 16-19;
+- o sweep dos modos principais para as Figs. 20-22;
 - a exportacao de CSVs brutos, estaveis e rastreados;
 - a documentacao das equacoes e da narrativa fisica do artigo.
 
@@ -111,7 +110,7 @@ No fluxo atual:
 
 - tratamento fino do setor `even`, que continua mais sensivel;
 - refinamento da identificacao modal final e da leitura fisica das curvas das Figs. 16-19;
-- extensao do mesmo pipeline para as Figs. 20-22;
+- rotulagem fisica final dos modos principais nas Figs. 20-22;
 - implementacao futura dos mapas de campo das Figs. 4-15;
 - interpretacao final da nota de reescalonamento da p. 2144.
 
@@ -130,6 +129,12 @@ Compilacao recomendada:
 
 ```bash
 ./run.sh build
+```
+
+Ou, se preferir o build tradicional do repositorio:
+
+```bash
+make
 ```
 
 Compilacao manual, se precisar depurar o ambiente:
@@ -216,6 +221,7 @@ Hoje, os testes de validacao mais importantes do repositorio sao:
 - reproducao da Tabela I;
 - comparacao qualitativa e quantitativa das Figs. 16-19;
 - exploracao dos efeitos de `\Delta n_r` e da razao de aspecto para as Figs. 20-22.
+- verificacao independente das funcoes de Bessel via `python3 scripts/validate_bessel.py`.
 
 A Tabela I tem sido especialmente util porque ela testa a convergencia em funcao do numero de harmonicos, isto e, testa o proprio coracao numerico do metodo. O alvo operacional atual e:
 

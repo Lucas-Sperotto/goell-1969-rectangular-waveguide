@@ -13,11 +13,10 @@ separar algumas hipoteses concorrentes:
 
 from __future__ import annotations
 
-import csv
-import io
 import math
-import subprocess
 from pathlib import Path
+
+from solver_api import call_solver
 
 
 TABLE1_EXPECTED = {
@@ -48,41 +47,20 @@ def run_case(
     candidates: list[tuple[float, float, str, str]] = []
     for parity in ("odd", "even"):
         for phase in ("phi0", "phi90"):
-            cmd = [
-                "./build/goell_q_solver",
-                "--parity",
-                parity,
-                "--phase",
-                phase,
-                "--geometry",
-                geometry,
-                "--a_over_b",
-                str(a_over_b),
-                "--nr",
-                "1.01",
-                "--N",
-                str(N),
-                "--Bmin",
-                "2",
-                "--Bmax",
-                "2",
-                "--NB",
-                "0",
-                "--Pscan",
-                str(pscan),
-                "--metric",
-                "det",
-                "--det-search",
-                det_search,
-                "--even-rect-mode",
-                even_rect_mode,
+            args = [
+                "--parity", parity, "--phase", phase,
+                "--geometry", geometry,
+                "--a_over_b", str(a_over_b), "--nr", "1.01",
+                "--N", str(N),
+                "--Bmin", "2", "--Bmax", "2", "--NB", "0",
+                "--Pscan", str(pscan),
+                "--metric", "det", "--det-search", det_search,
+                "--even-rect-mode", even_rect_mode,
                 "--all-minima",
             ]
             if not rescale:
-                cmd.append("--no-rescale")
-
-            out = subprocess.check_output(cmd, text=True)
-            rows = list(csv.DictReader(io.StringIO(out)))
+                args.append("--no-rescale")
+            rows = call_solver(args)
             for row in rows:
                 pprime = float(row["Pprime"])
                 merit = float(row["merit"])

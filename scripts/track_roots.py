@@ -40,6 +40,28 @@ class Branch:
     def last(self) -> Point:
         return self.points[-1]
 
+    def slope_estimate(self) -> float:
+        """Estima dP'/dB a partir dos 2 ultimos pontos.
+
+        Usado para extrapolar a posicao esperada do ramo em B_next.
+        Retorna 0.0 para ramos com menos de 2 pontos (sem historico de inclinacao).
+        """
+        if len(self.points) < 2:
+            return 0.0
+        p0, p1 = self.points[-2], self.points[-1]
+        dB = p1.B - p0.B
+        if abs(dB) < 1e-12:
+            return 0.0
+        return (p1.Pprime - p0.Pprime) / dB
+
+    def predicted_Pprime(self, B_next: float) -> float:
+        """Extrapola P' para B_next usando a inclinacao local do ramo.
+
+        Para ramos com 1 ponto usa o valor atual sem correcao.
+        Para ramos com 2+ pontos extrapola linearmente.
+        """
+        return self.last.Pprime + self.slope_estimate() * (B_next - self.last.B)
+
     def monotonic_up_fraction(self, tol: float) -> float:
         if len(self.points) <= 1:
             return 1.0
@@ -84,11 +106,16 @@ def track_branches(
     for B in sorted(by_B):
         points = by_B[B]
 
-        # Monta todas as associacoes plausiveis entre ramos ativos e pontos em B.
+        # Custo de associacao: distancia entre P' do ponto e o P' *predito* pelo ramo
+        # via extrapolacao linear (slope dos 2 ultimos pontos).
+        # Isso evita que ramos proximos troquem pontos quando se cruzam em B:
+        # o ramo com inclinacao correta tem custo menor do que um ramo vizinho
+        # que esta "indo em direcao errada".
         pairs: list[tuple[float, int, int]] = []
         for branch_index, branch in enumerate(active):
+            predicted = branch.predicted_Pprime(B)
             for point_index, point in enumerate(points):
-                cost = abs(point.Pprime - branch.last.Pprime)
+                cost = abs(point.Pprime - predicted)
                 if cost <= max_jump:
                     pairs.append((cost, branch_index, point_index))
         pairs.sort()

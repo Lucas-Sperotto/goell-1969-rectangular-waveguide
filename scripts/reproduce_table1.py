@@ -15,13 +15,13 @@ from __future__ import annotations
 
 import argparse
 import csv
-import io
 import math
-import subprocess
 import sys
 from pathlib import Path
 
 import matplotlib.pyplot as plt
+
+from solver_api import call_solver, ensure_solver_exists
 
 
 TABLE1_EXPECTED = {
@@ -33,17 +33,8 @@ TABLE1_EXPECTED = {
 
 AB_VALUES = [1.0, 2.0, 3.0, 4.0]
 N_VALUES = [3, 4, 5, 6, 7, 8, 9]
-SOLVER_BIN = Path("build/goell_q_solver")
 ODD_CLUSTER_FLOOR = 0.6
 CLUSTER_TOL = 0.03
-
-
-def ensure_solver_exists() -> None:
-    if SOLVER_BIN.exists():
-        return
-    raise SystemExit(
-        "build/goell_q_solver nao encontrado. Rode ./run.sh build ou compile o solver antes."
-    )
 
 
 def run_solver_case(
@@ -56,39 +47,20 @@ def run_solver_case(
     candidates: list[dict[str, object]] = []
     for parity in ("odd", "even"):
         for phase in ("phi0", "phi90"):
-            cmd = [
-                str(SOLVER_BIN),
-                "--parity",
-                parity,
-                "--phase",
-                phase,
-                "--geometry",
-                "intersection",
-                "--a_over_b",
-                str(a_over_b),
-                "--nr",
-                "1.01",
-                "--N",
-                str(N),
-                "--Bmin",
-                "2",
-                "--Bmax",
-                "2",
-                "--NB",
-                "0",
-                "--Pscan",
-                str(pscan),
-                "--metric",
-                "det",
-                "--det-search",
-                "sign",
-                "--even-rect-mode",
-                even_rect_mode,
-                "--all-minima",
-                "--no-rescale",
-            ]
-            out = subprocess.check_output(cmd, text=True)
-            rows = list(csv.DictReader(io.StringIO(out)))
+            rows = call_solver([
+                "--parity", parity,
+                "--phase", phase,
+                "--geometry", "intersection",
+                "--a_over_b", str(a_over_b),
+                "--nr", "1.01",
+                "--N", str(N),
+                "--Bmin", "2", "--Bmax", "2", "--NB", "0",
+                "--Pscan", str(pscan),
+                "--metric", "det",
+                "--det-search", "sign",
+                "--even-rect-mode", even_rect_mode,
+                "--all-minima", "--no-rescale",
+            ])
             for row in rows:
                 pprime = float(row["Pprime"])
                 merit = float(row["merit"])

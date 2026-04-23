@@ -17,12 +17,11 @@ from __future__ import annotations
 
 import argparse
 import csv
-import io
 import math
-import subprocess
 from pathlib import Path
 from statistics import fmean
 
+from solver_api import call_solver, ensure_solver_exists
 from track_roots import filter_branches, load_points, track_branches, write_tracked_csv
 
 
@@ -32,7 +31,6 @@ TABLE1_EXPECTED = {
     3.0: {3: 0.820, 4: 0.820, 5: 0.819, 6: 0.822, 7: 0.820, 8: 0.820, 9: 0.823},
     4.0: {3: 0.828, 4: 0.819, 5: 0.813, 6: 0.820, 7: 0.813, 8: 0.814, 9: 0.815},
 }
-SOLVER_BIN = Path("build/goell_q_solver")
 
 CLASS_CASES = (
     ("odd", "phi0", "odd_phi0"),
@@ -67,43 +65,17 @@ def run_solver(
     even_rect_mode: str,
     rescale: bool,
 ) -> list[dict[str, str]]:
-    ensure_solver_exists()
-    cmd = [
-        str(SOLVER_BIN),
-        "--parity",
-        parity,
-        "--phase",
-        phase,
-        "--geometry",
-        geometry,
-        "--a_over_b",
-        str(a_over_b),
-        "--nr",
-        str(nr),
-        "--N",
-        str(N),
-        "--Bmin",
-        str(B),
-        "--Bmax",
-        str(B),
-        "--NB",
-        "0",
-        "--Pscan",
-        str(pscan),
-        "--metric",
-        metric,
-        "--det-search",
-        det_search,
-        "--even-rect-mode",
-        even_rect_mode,
-        "--dump-scan",
-        str(B),
+    args = [
+        "--parity", parity, "--phase", phase, "--geometry", geometry,
+        "--a_over_b", str(a_over_b), "--nr", str(nr), "--N", str(N),
+        "--Bmin", str(B), "--Bmax", str(B), "--NB", "0",
+        "--Pscan", str(pscan), "--metric", metric,
+        "--det-search", det_search, "--even-rect-mode", even_rect_mode,
+        "--dump-scan", str(B),
     ]
     if not rescale:
-        cmd.append("--no-rescale")
-
-    out = subprocess.check_output(cmd, text=True)
-    return list(csv.DictReader(io.StringIO(out)))
+        args.append("--no-rescale")
+    return call_solver(args)
 
 
 def run_curve_solver(
@@ -123,50 +95,17 @@ def run_curve_solver(
     even_rect_mode: str,
     rescale: bool,
 ) -> list[dict[str, str]]:
-    ensure_solver_exists()
-    cmd = [
-        str(SOLVER_BIN),
-        "--parity",
-        parity,
-        "--phase",
-        phase,
-        "--geometry",
-        geometry,
-        "--a_over_b",
-        str(a_over_b),
-        "--nr",
-        str(nr),
-        "--N",
-        str(N),
-        "--Bmin",
-        str(Bmin),
-        "--Bmax",
-        str(Bmax),
-        "--NB",
-        str(NB),
-        "--Pscan",
-        str(pscan),
-        "--metric",
-        metric,
-        "--det-search",
-        det_search,
-        "--even-rect-mode",
-        even_rect_mode,
+    args = [
+        "--parity", parity, "--phase", phase, "--geometry", geometry,
+        "--a_over_b", str(a_over_b), "--nr", str(nr), "--N", str(N),
+        "--Bmin", str(Bmin), "--Bmax", str(Bmax), "--NB", str(NB),
+        "--Pscan", str(pscan), "--metric", metric,
+        "--det-search", det_search, "--even-rect-mode", even_rect_mode,
         "--all-minima",
     ]
     if not rescale:
-        cmd.append("--no-rescale")
-
-    out = subprocess.check_output(cmd, text=True)
-    return list(csv.DictReader(io.StringIO(out)))
-
-
-def ensure_solver_exists() -> None:
-    if SOLVER_BIN.exists():
-        return
-    raise SystemExit(
-        "build/goell_q_solver nao encontrado. Rode ./run.sh build ou compile o solver antes."
-    )
+        args.append("--no-rescale")
+    return call_solver(args)
 
 
 def parse_n_values(raw: str) -> list[int]:

@@ -5,7 +5,10 @@ Este documento reúne as convenções do repositório e o roteiro de evolução 
 ## Estado atual do repositorio
 
 - O solver principal esta em `src/goell_q_solver.cpp`.
-- Os utilitarios de reproducao, validacao e plotagem estao em `src/`.
+- Os utilitarios de reproducao, validacao e plotagem estao em `scripts/`.
+- `run.sh` na raiz e a interface publica; `scripts/run.sh` e a implementacao interna.
+- `Makefile` oferece um build alternativo do solver oficial.
+- `memory/` guarda a refatoracao modular em C++ ainda fora do build padrao.
 - A documentacao principal esta em `docs/`, com indice em `docs/README.md`.
 - As notas permanentes de apoio ficam em `docs/referencias/`.
 - `build/`, `out/` e `figures/` sao artefatos gerados localmente.
@@ -21,7 +24,7 @@ Este documento reúne as convenções do repositório e o roteiro de evolução 
 ### Entradas e saidas
 
 - O fluxo principal gera CSVs em `out/` e figuras em `figures/`.
-- Os graficos devem nascer dos artefatos numericos produzidos pelo solver e pelos scripts de apoio em `src/`.
+- Os graficos devem nascer dos artefatos numericos produzidos pelo solver e pelos scripts de apoio em `scripts/`.
 - Quando um resultado for importante para a memoria tecnica do projeto, ele deve virar nota em `docs/` ou `docs/referencias/`, em vez de ficar preso apenas a um artefato temporario.
 
 ### Documentacao e rastreabilidade
@@ -34,16 +37,17 @@ Este documento reúne as convenções do repositório e o roteiro de evolução 
 
 - Recompilar o solver quando houver mudanca em `src/goell_q_solver.cpp`.
 - Executar `python3 -m py_compile` nos scripts Python alterados.
-- Se a mudanca for numerica, rerodar ao menos o fluxo mais proximo do trecho afetado, preferencialmente via `./run.sh`, `src/reproduce_table1.py` ou `src/validate_goell.py`.
+- Se a mudanca for numerica, rerodar ao menos o fluxo mais proximo do trecho afetado, preferencialmente via `./run.sh`, `scripts/reproduce_table1.py` ou `scripts/validate_goell.py`.
 
 ## Mapa artigo -> codigo
 
 | Parte do artigo | Arquivos principais |
 | --- | --- |
 | Secao II - formulacao teorica | `src/goell_q_solver.cpp`, `docs/02_derivacao_das_equacoes.md`, `docs/02.1_efeitos_da_simetria.md` a `docs/02.7_metodo_de_computacao.md` |
-| Secao III - resultados | `run.sh`, `src/plot_compare.py`, `src/validate_goell.py`, `docs/03_resultados_do_calculo.md`, `docs/03.1_precisao.md`, `docs/03.2_configuracoes_modais.md`, `docs/03.3_curvas_de_propagacao.md` |
-| Tabela I | `src/reproduce_table1.py`, `src/analyze_table1_variation.py`, `docs/referencias/04_notas_sobre_a_tabela_1.md` |
-| Modos principais e Figs. 20-22 | `src/principal_modes.py`, `src/sweep_principal_modes.py`, `run.sh`, `docs/03.3_curvas_de_propagacao.md` |
+| Secao III - resultados | `run.sh`, `scripts/plot_compare.py`, `scripts/validate_goell.py`, `docs/03_resultados_do_calculo.md`, `docs/03.1_precisao.md`, `docs/03.2_configuracoes_modais.md`, `docs/03.3_curvas_de_propagacao.md` |
+| Tabela I | `scripts/reproduce_table1.py`, `scripts/analyze_table1_variation.py`, `docs/referencias/04_notas_sobre_a_tabela_1.md` |
+| Modos principais e Figs. 20-22 | `scripts/principal_modes.py`, `scripts/sweep_principal_modes.py`, `run.sh`, `docs/03.3_curvas_de_propagacao.md` |
+| Refatoracao C++ modular | `memory/*.hpp`, `memory/*.cpp`, `memory/project_refactoring_phase2.md` |
 | Conferencia de notacao e OCR | `docs/referencias/03_checklist_de_conferencia.md` |
 
 ## Comandos uteis
@@ -58,8 +62,9 @@ Este documento reúne as convenções do repositório e o roteiro de evolução 
 ./run.sh all-curves
 SWEEP_REUSE_EXISTING=1 ./run.sh fig22
 ./run.sh validate
-python3 src/analyze_table1_variation.py
-python3 src/validate_goell.py --stability-figures fig16 fig17 --det-search sign
+python3 scripts/analyze_table1_variation.py
+python3 scripts/validate_goell.py --stability-figures fig16 fig17 --det-search sign
+python3 scripts/validate_bessel.py
 ```
 
 ## Roteiro de evolucao

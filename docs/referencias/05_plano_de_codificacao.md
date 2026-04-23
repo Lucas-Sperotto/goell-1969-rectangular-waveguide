@@ -15,7 +15,7 @@ O principio adotado e reproducao numerica incremental: primeiro fechar o nucleo 
 ## Nucleo Fechado Nesta Fase
 
 - `./run.sh` e a interface publica oficial.
-- `src/presets.sh` e apenas shim de compatibilidade.
+- `scripts/run.sh` contem a orquestracao interna; `./run.sh` e `src/presets.sh` sao shims de compatibilidade.
 - `det-search=sign` e o modo canonico de reproducao.
 - `geometry=intersection` e a geometria padrao.
 - A Tabela I usa selecao autonoma do primeiro ramo fisico.
