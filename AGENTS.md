@@ -15,11 +15,12 @@ Reproduzir, com clareza e fidelidade, o artigo de J. E. Goell (1969) sobre anali
 3. Marcar ambiguidades de OCR com `TODO`.
 4. Preservar a rastreabilidade entre texto, equacoes, figuras, scripts e resultados numericos.
 5. Manter o nucleo numerico em `C++17`, sem dependencias desnecessarias.
-6. Tratar `src/goell_q_solver.cpp` como o solver central e os arquivos Python em `src/` como utilitarios de reproducao, diagnostico e plotagem.
-7. Garantir que a saida numerica gerada pelo fluxo principal continue indo para `CSV` em `out/`, com figuras derivadas em `figures/`.
-8. Nao introduzir estruturas de projeto ficticias ou herdadas de outros repositorios, como `src/apps/`, `scripts/` ou `data/`, sem que elas existam de fato e sejam adotadas explicitamente.
-9. Comentar o codigo de forma clara e suficiente para facilitar revisao cientifica.
-10. Registrar, sempre que possivel, quais equacoes, figuras ou tabelas do artigo cada modulo implementa.
+6. Tratar `src/main.cpp` como a entrada do solver e `src/core/` + `include/goell/` como a implementacao central modular em C++17.
+7. Tratar `scripts/` como a interface canonica dos utilitarios Python e shell, com implementacao interna organizada em `scripts/lib/`, `scripts/pipelines/`, `scripts/plotting/`, `scripts/tracking/` e `scripts/validation/`.
+8. Garantir que a saida numerica gerada pelo fluxo principal continue indo para `CSV` em `out/`, com figuras derivadas em `figures/`.
+9. Nao introduzir estruturas de projeto ficticias ou herdadas de outros repositorios, como `src/apps/` ou `data/`, sem que elas existam de fato e sejam adotadas explicitamente.
+10. Comentar o codigo de forma clara e suficiente para facilitar revisao cientifica.
+11. Registrar, sempre que possivel, quais equacoes, figuras ou tabelas do artigo cada modulo implementa.
 
 ## Convenções para documentação
 
@@ -32,6 +33,7 @@ Reproduzir, com clareza e fidelidade, o artigo de J. E. Goell (1969) sobre anali
 ## Convenções para evolução do repositório
 
 1. Manter a estrutura principal em `docs/`, `docs/referencias/` e `src/`, respeitando a organizacao real do repositorio.
-2. Tratar `build/`, `out/` e `figures/` como artefatos gerados, nao como documentacao canonica.
-3. Antes de propor reorganizacoes maiores, conferir o estado atual do repositorio em vez de assumir a arquitetura de outros projetos.
-4. Implementar primeiro uma base minima, verificavel e organizada; depois expandir a matematica ou o ferramental auxiliar.
+2. Preservar o layout oficial atual de codigo em `include/goell/`, `src/core/`, `src/main.cpp` e `scripts/`, a menos que uma reorganizacao nova seja adotada explicitamente.
+3. Tratar `build/`, `out/` e `figures/` como artefatos gerados, nao como documentacao canonica.
+4. Antes de propor reorganizacoes maiores, conferir o estado atual do repositorio em vez de assumir a arquitetura de outros projetos.
+5. Implementar primeiro uma base minima, verificavel e organizada; depois expandir a matematica ou o ferramental auxiliar.

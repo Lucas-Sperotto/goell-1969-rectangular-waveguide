@@ -4,11 +4,11 @@ Este documento reúne as convenções do repositório e o roteiro de evolução 
 
 ## Estado atual do repositorio
 
-- O solver principal esta em `src/goell_q_solver.cpp`.
-- Os utilitarios de reproducao, validacao e plotagem estao em `scripts/`.
+- O solver principal agora entra por `src/main.cpp` e esta modularizado em `src/core/`, com interfaces em `include/goell/`.
+- Os utilitarios de reproducao, validacao e plotagem continuam acessiveis em `scripts/`, com implementacao interna organizada em `scripts/lib`, `scripts/pipelines`, `scripts/plotting`, `scripts/tracking` e `scripts/validation`.
 - `run.sh` na raiz e a interface publica; `scripts/run.sh` e a implementacao interna.
-- `Makefile` oferece um build alternativo do solver oficial.
-- `memory/` guarda a refatoracao modular em C++ ainda fora do build padrao.
+- `Makefile` e o build oficial do solver modular; `scripts/run.sh` delega a ele.
+- `memory/` guarda apenas notas historicas da migracao, nao codigo oficial.
 - A documentacao principal esta em `docs/`, com indice em `docs/README.md`.
 - As notas permanentes de apoio ficam em `docs/referencias/`.
 - `build/`, `out/` e `figures/` sao artefatos gerados localmente.
@@ -35,7 +35,7 @@ Este documento reúne as convenções do repositório e o roteiro de evolução 
 
 ### Verificacao minima
 
-- Recompilar o solver quando houver mudanca em `src/goell_q_solver.cpp`.
+- Recompilar o solver quando houver mudanca em `src/main.cpp`, `src/core/` ou `include/goell/`.
 - Executar `python3 -m py_compile` nos scripts Python alterados.
 - Se a mudanca for numerica, rerodar ao menos o fluxo mais proximo do trecho afetado, preferencialmente via `./run.sh`, `scripts/reproduce_table1.py` ou `scripts/validate_goell.py`.
 
@@ -43,17 +43,18 @@ Este documento reúne as convenções do repositório e o roteiro de evolução 
 
 | Parte do artigo | Arquivos principais |
 | --- | --- |
-| Secao II - formulacao teorica | `src/goell_q_solver.cpp`, `docs/02_derivacao_das_equacoes.md`, `docs/02.1_efeitos_da_simetria.md` a `docs/02.7_metodo_de_computacao.md` |
+| Secao II - formulacao teorica | `src/core/matrix.cpp`, `src/core/boundary.cpp`, `src/core/layout.cpp`, `docs/02_derivacao_das_equacoes.md`, `docs/02.1_efeitos_da_simetria.md` a `docs/02.7_metodo_de_computacao.md` |
 | Secao III - resultados | `run.sh`, `scripts/plot_compare.py`, `scripts/validate_goell.py`, `docs/03_resultados_do_calculo.md`, `docs/03.1_precisao.md`, `docs/03.2_configuracoes_modais.md`, `docs/03.3_curvas_de_propagacao.md` |
 | Tabela I | `scripts/reproduce_table1.py`, `scripts/analyze_table1_variation.py`, `docs/referencias/04_notas_sobre_a_tabela_1.md` |
 | Modos principais e Figs. 20-22 | `scripts/principal_modes.py`, `scripts/sweep_principal_modes.py`, `run.sh`, `docs/03.3_curvas_de_propagacao.md` |
-| Refatoracao C++ modular | `memory/*.hpp`, `memory/*.cpp`, `memory/project_refactoring_phase2.md` |
+| Arquitetura atual do solver | `include/goell/*.hpp`, `src/main.cpp`, `src/core/*.cpp`, `memory/project_refactoring_phase2.md` |
 | Conferencia de notacao e OCR | `docs/referencias/03_checklist_de_conferencia.md` |
 
 ## Comandos uteis
 
 ```bash
 ./run.sh build
+make check-cpp
 ./run.sh table1
 ./run.sh fig16
 ./run.sh fig17

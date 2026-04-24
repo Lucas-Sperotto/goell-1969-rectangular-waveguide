@@ -29,10 +29,13 @@ O objetivo do projeto e reproduzir, com clareza, rastreabilidade e fidelidade, o
 - `docs/`: traducao principal do artigo.
 - `docs/referencias/`: notas auxiliares permanentes do repositorio.
 - `run.sh`: interface publica para build, reproducao e validacao.
-- `src/goell_q_solver.cpp`: solver principal.
-- `scripts/*.py`: utilitarios de reproducao, validacao e plotagem.
+- `include/goell/*.hpp`: interfaces do solver C++.
+- `src/main.cpp`: orquestracao do binario `goell_q_solver`.
+- `src/core/*.cpp`: implementacao modular do solver.
+- `scripts/*.py`: wrappers publicos e utilitarios shell.
+- `scripts/lib`, `scripts/pipelines`, `scripts/plotting`, `scripts/tracking`, `scripts/validation`: implementacao Python organizada por responsabilidade.
 - `src/presets.sh`: shim de compatibilidade para o fluxo antigo.
-- `memory/`: refatoracao C++ modular experimental, ainda fora do build oficial.
+- `memory/`: notas historicas da migracao, sem papel no build oficial.
 - `build/`, `out/` e `figures/`: artefatos gerados localmente.
 
 ## Estilo de edicao
@@ -47,6 +50,7 @@ Os comandos principais do fluxo atual sao:
 
 ```bash
 ./run.sh build
+make check-cpp
 ./run.sh table1
 ./run.sh fig16
 ./run.sh fig20

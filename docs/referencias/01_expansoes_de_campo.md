@@ -225,7 +225,7 @@ O artigo diz para usar a primeira formula para todos os pontos, exceto pelos doi
 
 Estas definicoes entram diretamente em:
 
-- escolha da classe modal em `src/goell_q_solver.cpp`;
+- escolha da classe modal em `src/core/layout.cpp` e `include/goell/layout.hpp`;
 - geracao dos pontos de contorno;
 - montagem dos blocos da matriz `Q`.
 

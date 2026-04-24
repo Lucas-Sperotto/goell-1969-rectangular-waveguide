@@ -4,7 +4,7 @@ Pendencias tecnicas priorizadas depois do fechamento inicial da pasta `docs/` e 
 
 ## Concluido Nesta Fase
 
-- Revisado o bloco `H^{TA}` em `src/goell_q_solver.cpp`.
+- Revisado o bloco `H^{TA}` no solver C++.
 - Separada a protecao numerica da avaliacao fisica dos argumentos `hr` e `pr`.
 - Reexecutada a Tabela I com selecao autonoma e thresholds objetivos.
 - Criado `run.sh` como interface publica de build, reproducao e validacao.
@@ -13,6 +13,10 @@ Pendencias tecnicas priorizadas depois do fechamento inicial da pasta `docs/` e 
 - Estabilizado o pipeline das Figs. 16-19 com CSVs brutos, estaveis e rastreados.
 - Adicionado scaffold das Figs. 20-22 para os dois modos principais.
 - Restaurada a compatibilidade publica com `./run.sh` e `src/presets.sh` como shims para `scripts/`.
+- Concluida a modularizacao do solver em `include/goell/`, `src/core/` e `src/main.cpp`.
+- Reorganizados os scripts internos em `scripts/lib/`, `scripts/pipelines/`, `scripts/plotting/`, `scripts/tracking/` e `scripts/validation/`, com wrappers publicos preservados em `scripts/`.
+- Unificado o build oficial no `Makefile`, com `scripts/run.sh` delegando a `make`.
+- Adicionado `make check-cpp` como smoke test leve para CLI, layout, matching geométrico e dimensoes basicas da matriz `Q`.
 
 ## Validacao modal
 
@@ -29,12 +33,11 @@ Pendencias tecnicas priorizadas depois do fechamento inicial da pasta `docs/` e 
 - Gerar mapas de intensidade em Python.
 - Planejar, depois dos mapas de intensidade, linhas de campo.
 
-## Refatoracao C++ Modular
+## Arquitetura Atual
 
-- A compilacao isolada de `memory/*.cpp` passa, mas essa trilha ainda nao alimenta o binario oficial.
-- Decidir se `memory/` vira o solver oficial ou permanece como area experimental.
-- Se virar oficial, adicionar alvo dedicado no `Makefile` e comparar sua saida contra `src/goell_q_solver.cpp`.
-- Manter `src/goell_q_solver.cpp` como referencia numerica ate a modularizacao reproduzir Tabela I, Fig. 16 e `validate_bessel.py`.
+- Manter a equivalencia numerica entre `./run.sh validate`, `python3 scripts/validate_bessel.py` e o smoke test `make check-cpp`.
+- Preservar a compatibilidade da CLI publica (`./run.sh`, flags do binario e esquema CSV) enquanto novas capacidades forem adicionadas.
+- Atualizar `README.md`, `CONTRIBUTING.md`, `DEVELOPMENT.md`, `docs/README.md` e `docs/simbolos.md` sempre que a arquitetura modular mudar.
 
 ## Pendencias Tecnicas De Fundo
 

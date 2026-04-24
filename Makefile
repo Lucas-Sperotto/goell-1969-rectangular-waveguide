@@ -6,41 +6,53 @@
 #   make clean    - Remove o diretório de build e todos os artefatos.
 #
 
-# Compilador e flags
 CXX = g++
-CXXFLAGS = -O3 -std=c++17 -I /usr/include/eigen3 -Wall -Wextra -pedantic
+EIGEN_DIR ?= /usr/include/eigen3
+CPPFLAGS = -Iinclude -I$(EIGEN_DIR)
+CXXFLAGS = -O3 -std=c++17 -Wall -Wextra -pedantic
 LDFLAGS =
 
-# Diretórios
 SRC_DIR = src
 BUILD_DIR = build
+TEST_DIR = tests
 
-# Alvo
 TARGET = $(BUILD_DIR)/goell_q_solver
+TEST_TARGET = $(BUILD_DIR)/goell_core_smoke
 
-# Arquivos-fonte C++
-SOURCES = $(wildcard $(SRC_DIR)/*.cpp)
+SOURCES = $(shell find $(SRC_DIR) -name '*.cpp' | sort)
+OBJECTS = $(patsubst $(SRC_DIR)/%.cpp,$(BUILD_DIR)/%.o,$(SOURCES))
+TEST_SOURCES = $(wildcard $(TEST_DIR)/*.cpp)
+TEST_OBJECTS = $(patsubst $(TEST_DIR)/%.cpp,$(BUILD_DIR)/tests/%.o,$(TEST_SOURCES))
+CORE_OBJECTS = $(filter-out $(BUILD_DIR)/main.o,$(OBJECTS))
+DEPS = $(OBJECTS:.o=.d) $(TEST_OBJECTS:.o=.d)
 
-# Arquivos-objeto (colocados no diretório de build)
-OBJECTS = $(SOURCES:$(SRC_DIR)/%.cpp=$(BUILD_DIR)/%.o)
-
-# Alvo padrão (o que 'make' faz sem argumentos)
 all: $(TARGET)
 
-# Regra de linkagem para criar o executável final
 $(TARGET): $(OBJECTS)
 	@mkdir -p $(@D)
 	$(CXX) $(LDFLAGS) $^ -o $@
 	@echo "Solver compilado com sucesso: $@"
 
-# Regra para compilar cada arquivo-objeto a partir de seu .cpp
 $(BUILD_DIR)/%.o: $(SRC_DIR)/%.cpp
 	@mkdir -p $(@D)
-	$(CXX) $(CXXFLAGS) -c $< -o $@
+	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -MMD -MP -c $< -o $@
 
-# Alvo para limpeza
+$(BUILD_DIR)/tests/%.o: $(TEST_DIR)/%.cpp
+	@mkdir -p $(@D)
+	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -MMD -MP -c $< -o $@
+
+$(TEST_TARGET): $(CORE_OBJECTS) $(TEST_OBJECTS)
+	@mkdir -p $(@D)
+	$(CXX) $(LDFLAGS) $^ -o $@
+	@echo "Smoke test compilado com sucesso: $@"
+
+check-cpp: $(TEST_TARGET)
+	./$(TEST_TARGET)
+
 clean:
 	@echo "Limpando artefatos de build..."
 	@rm -rf $(BUILD_DIR)
 
-.PHONY: all clean
+-include $(DEPS)
+
+.PHONY: all clean check-cpp

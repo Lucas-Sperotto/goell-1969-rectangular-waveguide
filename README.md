@@ -30,13 +30,16 @@ Este repositorio foi montado justamente para tornar esse caminho legivel, verifi
 ### Codigo
 
 - [run.sh](run.sh): interface publica oficial para build, Tabela I, Figs. 16-19, validacao e rodada completa.
-- [src/goell_q_solver.cpp](src/goell_q_solver.cpp): solver principal, com montagem da matriz `Q`, busca de raizes e exportacao das curvas.
+- [src/main.cpp](src/main.cpp): entrypoint enxuto do solver, dedicado apenas a parsear CLI e orquestrar a exportacao.
+- [src/core/](src/core): implementacao C++17 modular do solver, separada por responsabilidade (`cli`, `layout`, `boundary`, `matrix`, `diagnostics`, `solver`, `output`).
+- [include/goell/](include/goell): interfaces publicas dos modulos C++ do solver.
 - [src/presets.sh](src/presets.sh): shim de compatibilidade para encaminhar chamadas antigas ao `run.sh`.
-- [scripts/](scripts): scripts Python e sh de pos-processamento, validacao, plotagem e orquestracao interna.
-- [scripts/solver_api.py](scripts/solver_api.py): interface centralizada para chamar `build/goell_q_solver`.
-- [scripts/validate_bessel.py](scripts/validate_bessel.py): validacao das funcoes de Bessel contra `scipy.special`.
-- [Makefile](Makefile): build alternativo para o solver oficial em `src/goell_q_solver.cpp`.
-- [memory/](memory): area de refatoracao modular em C++ ainda experimental; o solver oficial continua em `src/goell_q_solver.cpp`.
+- [scripts/](scripts): wrappers publicos e scripts shell de orquestracao.
+- [scripts/lib/](scripts/lib), [scripts/pipelines/](scripts/pipelines), [scripts/plotting/](scripts/plotting), [scripts/tracking/](scripts/tracking) e [scripts/validation/](scripts/validation): implementacao Python interna, agora organizada por responsabilidade.
+- [scripts/solver_api.py](scripts/solver_api.py): wrapper de compatibilidade para a API centralizada que chama `build/goell_q_solver`.
+- [scripts/validate_bessel.py](scripts/validate_bessel.py): wrapper de compatibilidade para a validacao das funcoes de Bessel contra `scipy.special`.
+- [Makefile](Makefile): build oficial incremental do solver modular em `src/` com headers em `include/`.
+- [memory/](memory): notas historicas da migracao; nao e mais fonte oficial de codigo C++.
 
 ### Documentacao
 
@@ -129,6 +132,7 @@ Compilacao recomendada:
 
 ```bash
 ./run.sh build
+make check-cpp
 ```
 
 Ou, se preferir o build tradicional do repositorio:
@@ -141,7 +145,7 @@ Compilacao manual, se precisar depurar o ambiente:
 
 ```bash
 mkdir -p build
-g++ -O3 -std=c++17 src/goell_q_solver.cpp -I /usr/include/eigen3 -o build/goell_q_solver
+g++ -O3 -std=c++17 src/main.cpp src/core/*.cpp -Iinclude -I/usr/include/eigen3 -o build/goell_q_solver
 ```
 
 ## Como Rodar
@@ -221,6 +225,7 @@ Hoje, os testes de validacao mais importantes do repositorio sao:
 - reproducao da Tabela I;
 - comparacao qualitativa e quantitativa das Figs. 16-19;
 - exploracao dos efeitos de `\Delta n_r` e da razao de aspecto para as Figs. 20-22.
+- smoke test C++ do nucleo modular via `make check-cpp`;
 - verificacao independente das funcoes de Bessel via `python3 scripts/validate_bessel.py`.
 
 A Tabela I tem sido especialmente util porque ela testa a convergencia em funcao do numero de harmonicos, isto e, testa o proprio coracao numerico do metodo. O alvo operacional atual e:
@@ -241,13 +246,15 @@ Se voce estiver chegando agora, a ordem recomendada e:
 3. [docs/01_introducao.md](docs/01_introducao.md)
 4. [docs/02_derivacao_das_equacoes.md](docs/02_derivacao_das_equacoes.md)
 5. [docs/03_resultados_do_calculo.md](docs/03_resultados_do_calculo.md)
-6. [src/goell_q_solver.cpp](src/goell_q_solver.cpp)
+6. [src/main.cpp](src/main.cpp)
+7. [src/core/matrix.cpp](src/core/matrix.cpp)
 
 Se o objetivo for apenas localizar formulas ou conferir a implementacao:
 
 1. [docs/referencias/01_expansoes_de_campo.md](docs/referencias/01_expansoes_de_campo.md)
 2. [docs/referencias/02_matriz_global_e_normalizacao.md](docs/referencias/02_matriz_global_e_normalizacao.md)
-3. [src/goell_q_solver.cpp](src/goell_q_solver.cpp)
+3. [include/goell/layout.hpp](include/goell/layout.hpp)
+4. [src/core/matrix.cpp](src/core/matrix.cpp)
 
 ## Observacao Final
 

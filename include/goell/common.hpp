@@ -2,14 +2,10 @@
 #define GOELL_COMMON_HPP
 
 #include <string>
-#include <vector>
-#include <stdexcept> // For runtime_error
 
-// Global Constants
 static constexpr double PI = 3.14159265358979323846;
 static constexpr double EPS = 1e-12;
 
-// Enums
 enum class HarmonicParity
 {
     odd,
@@ -42,7 +38,6 @@ enum class RowKind
     ht_tan,
 };
 
-// Struct for solver parameters
 struct Params
 {
     double a_over_b = 1.0;
@@ -65,17 +60,11 @@ struct Params
     double dump_B = 0.0;
     bool dump_det_sign = false;
     bool test_bessel = false;
+    bool null_vector = false;
 };
 
-// Argument parsing and string conversion functions
 std::string parity_name(HarmonicParity parity);
 std::string phase_name(PhaseFamily phase);
 std::string geometry_name(BoundaryGeometryMode mode);
-HarmonicParity parse_parity(const std::string &value);
-PhaseFamily parse_phase(const std::string &value);
-std::string parse_det_search_mode(const std::string &value);
-BoundaryGeometryMode parse_geometry_mode(const std::string &value);
-EvenRectMatchingMode parse_even_rect_mode(const std::string &value);
-void parse_args(int argc, char **argv, Params &P);
 
 #endif // GOELL_COMMON_HPP

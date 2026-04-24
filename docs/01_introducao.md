@@ -10,9 +10,9 @@ Marcatili, utilizando aproximações baseadas na hipótese de que a maior parte 
 
 As propriedades do modo principal do guia de onda dielétrico retangular foram estudadas por Schlosser e Unger com o uso de um computador digital de alta velocidade. Na abordagem deles, o plano transversal foi dividido em regiões, como mostrado na Figura 1, e soluções em coordenadas retangulares foram assumidas em cada uma dessas regiões. A constante de propagação longitudinal era então ajustada para que fosse possível obter compatibilidade de campo em pontos discretos ao longo da fronteira. Esse método fornece resultados que, teoricamente, são válidos em uma faixa mais ampla do que a de Marcatili, mas com um aumento significativo da dificuldade computacional. Uma limitação do método é que, para um dado modo, à medida que o comprimento de onda aumenta, a extensão espacial do campo também aumenta; assim, no limite, torna-se cada vez mais difícil ajustar os campos ao longo das fronteiras entre as regiões [1] e [2] e entre as regiões [2] e [3].
 
-![Figura 1 — Guia imerso em diferentes dielétricos: seção transversal do modo fundamental](img/fig_01.png)
+![Fronteiras de acoplamento para a análise de modos em guias de onda retangulares.](img/fig_01.png)
 
-Figura 1 — Guia imerso em diferentes dielétricos: seção transversal do modo fundamental.
+Figura 1 — Fronteiras de acoplamento para a análise de modos em guias de onda retangulares.
 
 Uma abordagem variacional foi desenvolvida por Shaw e outros autores. Eles assumem uma solução de teste com dois ou três parâmetros variáveis no núcleo. A partir dessa solução de teste, os campos externos ao núcleo são então derivados, e os parâmetros são variados até que se obtenha uma solução consistente. Essa abordagem, assim como a de Schlosser, exige cálculos elaborados. Além disso, apresenta a desvantagem de exigir que a função de teste seja assumida previamente. Soma-se a isso o fato de que alguns de seus resultados preliminares não exibem o comportamento correto nos casos-limite, isto é, quando as dimensões do guia de onda são muito grandes ou muito pequenas em comparação com o comprimento de onda.
 

@@ -7,8 +7,8 @@ Este arquivo consolida o plano de codificacao usado para transformar a traducao 
 ## Arquitetura
 
 - `sh`: orquestracao unica via `./run.sh`.
-- `C++17`: montagem da matriz `Q`, determinante, busca de raizes e calculo numerico.
-- `Python`: leitura de CSV, selecao de ramos, validacao e geracao de figuras.
+- `C++17`: solver modular em `include/goell/`, `src/core/` e `src/main.cpp`, cobrindo CLI, layout, geometria, matriz `Q`, diagnosticos, busca de raizes e exportacao.
+- `Python`: wrappers publicos em `scripts/` e implementacao interna em `scripts/lib/`, `scripts/pipelines/`, `scripts/plotting/`, `scripts/tracking/` e `scripts/validation/`.
 
 O principio adotado e reproducao numerica incremental: primeiro fechar o nucleo validavel do artigo, depois expandir para curvas adicionais e, por fim, campos.
 
@@ -16,6 +16,7 @@ O principio adotado e reproducao numerica incremental: primeiro fechar o nucleo 
 
 - `./run.sh` e a interface publica oficial.
 - `scripts/run.sh` contem a orquestracao interna; `./run.sh` e `src/presets.sh` sao shims de compatibilidade.
+- `Makefile` e o build oficial do solver modular; `scripts/run.sh` delega a ele.
 - `det-search=sign` e o modo canonico de reproducao.
 - `geometry=intersection` e a geometria padrao.
 - A Tabela I usa selecao autonoma do primeiro ramo fisico.
@@ -33,11 +34,13 @@ O principio adotado e reproducao numerica incremental: primeiro fechar o nucleo 
 ## Criterios De Aceite
 
 - `./run.sh build` compila a partir de estado limpo.
+- `make check-cpp` passa como smoke test do nucleo modular.
 - `./run.sh table1` gera CSV, Markdown e PNG.
 - Tabela I mantem `MAE <= 0.01` e pior erro absoluto `<= 0.02`.
 - `./run.sh fig16` a `./run.sh fig19` geram CSVs brutos, CSVs estaveis, CSVs rastreados, PNG debug, PNG final e resumo Markdown.
 - `./run.sh fig20`, `fig21` e `fig22` geram CSV, Markdown e PNG dos modos principais.
 - `./run.sh validate` consolida a Tabela I e a exportacao estavel de `fig16` e `fig17`, falhando se os thresholds numericos forem violados.
+- `python3 scripts/validate_bessel.py` continua validando as funcoes de Bessel com 70/70 PASS.
 
 ## Proxima Fase
 

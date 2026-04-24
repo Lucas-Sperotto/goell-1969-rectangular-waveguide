@@ -13,7 +13,7 @@ O artigo apresenta os resultados dos cálculos na forma de curvas das constantes
 
 ## Referência do artigo original
 
-GOELL, J. E. *A Circular-Harmonic Computer Analysis of Rectangular Dielectric Waveguides*. The Bell System Technical Journal, v. 48, n. 7, p. 2133-2160, 1969.
+GOELL, J. E. **A Circular-Harmonic Computer Analysis of Rectangular Dielectric Waveguides.** The Bell System Technical Journal, v. 48, n. 7, p. 2133-2160, 1969.
 
 DOI: `10.1002/j.1538-7305.1969.tb01168.x`
 

@@ -6,8 +6,8 @@ REPO_ROOT="$(dirname "$SCRIPT_DIR")"
 cd "$REPO_ROOT"
 
 BIN="build/goell_q_solver"
-CPP_SRC="src/goell_q_solver.cpp"
 PYTHON_BIN="${PYTHON_BIN:-python3}"
+MAKE_BIN="${MAKE_BIN:-make}"
 MPLCONFIGDIR_DEFAULT="$REPO_ROOT/out/.mplconfig"
 export MPLCONFIGDIR="${MPLCONFIGDIR:-$MPLCONFIGDIR_DEFAULT}"
 
@@ -30,15 +30,17 @@ build_solver() {
     exit 1
   }
 
-  g++ -O3 -std=c++17 "$CPP_SRC" -I "$eigen_dir" -o "$BIN"
-}
-
-solver_needs_rebuild() {
-  [ ! -x "$BIN" ] || [ "$CPP_SRC" -nt "$BIN" ]
+  "$MAKE_BIN" EIGEN_DIR="$eigen_dir" all
 }
 
 ensure_build() {
-  if solver_needs_rebuild; then
+  local eigen_dir
+  eigen_dir="$(find_eigen_include)" || {
+    echo "Eigen nao encontrado. Ajuste o include path em run.sh." >&2
+    exit 1
+  }
+
+  if ! "$MAKE_BIN" -q EIGEN_DIR="$eigen_dir" all >/dev/null 2>&1; then
     build_solver
   fi
 }
@@ -173,6 +175,8 @@ run_figure() {
     "out/${tag}_stable_even_phi0_tracked.csv" \
     "out/${tag}_stable_even_phi90_tracked.csv" \
     --pmin 0.05 \
+    --figure-tag "$tag" \
+    --no-legend \
     --title "Goell CHM - ${FIG_TITLE} - curvas finais" \
     --save "$final_png"
 
@@ -208,19 +212,19 @@ run_principal_sweep() {
   case "$tag" in
     fig20)
       vary="nr"
-      values="${FIG20_NR_VALUES:-1.0001,1.01,1.1,1.5,2,5,11}"
+      values="${FIG20_NR_VALUES:-1.0001,1.5,3,101,1001}"
       sweep_a_over_b="${SWEEP_A_OVER_B:-1}"
       title="Goell CHM - Fig. 20 - modos principais vs n_r"
       ;;
     fig21)
       vary="nr"
-      values="${FIG21_NR_VALUES:-1.0001,1.01,1.1,1.5,2,5,11}"
+      values="${FIG21_NR_VALUES:-1.0001,1.5,3,101,1001}"
       sweep_a_over_b="${SWEEP_A_OVER_B:-2}"
       title="Goell CHM - Fig. 21 - modos principais vs n_r"
       ;;
     fig22)
       vary="a_over_b"
-      values="${FIG22_ASPECT_VALUES:-1,1.5,2,3,4,6,8}"
+      values="${FIG22_ASPECT_VALUES:-100,2,1}"
       sweep_nr="${SWEEP_NR:-1.0001}"
       title="Goell CHM - Fig. 22 - modos principais vs a/b"
       ;;

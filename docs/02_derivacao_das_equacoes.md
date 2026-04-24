@@ -4,9 +4,9 @@ _Navegacao: [README geral](../README.md) | [Indice de docs](README.md) | [Anteri
 
 O guia de onda considerado aqui consiste em um núcleo retangular de constante dielétrica $\varepsilon_1$, cercado por um meio infinito de constante dielétrica $\varepsilon_0$. Ambos os meios são assumidos isotrópicos e com permeabilidade igual à do espaço livre, $\mu_0$. A Figura 2 mostra os sistemas de coordenadas utilizados neste trabalho, retangulares e cilíndricos, bem como as dimensões da barra. A direção de propagação é na direção $+z$ (em direção ao observador).
 
-![Figura 2 — Guia imerso em diferentes dielétricos: seção transversal do modo fundamental](img/fig_02.png)
+![Figura 2 — Dimensões e sistemas de coordenadas.](img/fig_02.png)
 
-Figura 2 — Guia imerso em diferentes dielétricos: seção transversal do modo fundamental.
+Figura 2 — Dimensões e sistemas de coordenadas.
 
 Em coordenadas cilíndricas, as soluções de campo das equações de Maxwell assumem a forma de funções de Bessel e funções de Bessel modificadas multiplicadas por funções trigonométricas e por suas derivadas. Para que a propagação ocorra na direção $z$, as soluções de campo devem ser dadas por funções de Bessel no núcleo e por funções de Bessel modificadas no exterior. Como as funções de Bessel de segunda espécie possuem um polo na origem, e as funções de Bessel modificadas de primeira espécie possuem um polo no infinito, assume-se que a variação radial dos campos seja dada por uma soma de funções de Bessel de primeira espécie e de suas derivadas no interior do núcleo, e por uma soma de funções de Bessel modificadas e de suas derivadas no exterior do núcleo.
 

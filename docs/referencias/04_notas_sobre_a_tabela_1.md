@@ -26,7 +26,7 @@ Entre as variantes testadas, a configuracao que melhor reproduziu a tabela foi:
 Resumo dos erros medidos:
 
 | geometry | det-search | rescale | RMSE | MAE | pior erro |
-|:--|:--|:--|--:|--:|--:|
+| :-- | :-- | :-- | --: | --: | --: |
 | `intersection` | `sign` | `off` | `0.012603` | `0.009735` | `0.031270` |
 | `intersection` | `minima` | `off` | `0.037199` | `0.020985` | `0.111538` |
 | `literal` | `sign` | `off` | `0.093350` | `0.072888` | `0.161010` |
@@ -81,7 +81,7 @@ No estado atual do repositorio, a primeira parte melhorou bastante. A segunda ai
 
 ## Proximos Passos Naturais
 
-- melhorar o *branch tracking* com continuidade em `B`;
+- melhorar o **branch tracking** com continuidade em `B`;
 - revisar com mais cuidado o setor `even`, que continua mais sensivel;
 - usar a Tabela I nao apenas como teste de "valor numerico", mas como teste de identificacao modal consistente.
 

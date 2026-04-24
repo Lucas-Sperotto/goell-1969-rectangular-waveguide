@@ -1,13 +1,11 @@
 #ifndef GOELL_SOLVER_HPP
 #define GOELL_SOLVER_HPP
 
-#include "goell_common.hpp" // For Params
-#include "goell_matrix.hpp" // For DeterminantInfo
-#include <vector>
-#include <algorithm> // For std::min, std::max
-#include <cmath>     // For isfinite
+#include "goell/common.hpp"
+#include "goell/diagnostics.hpp"
 
-// Structs for scan results
+#include <vector>
+
 struct Sample
 {
     double B = 0.0;
@@ -23,7 +21,6 @@ struct DetSample
     int sign = 0;
 };
 
-// Core solver functions
 double merit_value(const Params &P, double B, double Pprime);
 DeterminantInfo determinant_value(const Params &P, double B, double Pprime);
 std::vector<Sample> scan_P(const Params &P, double B);

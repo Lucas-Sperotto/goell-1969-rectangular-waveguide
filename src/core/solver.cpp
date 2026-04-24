@@ -1,7 +1,10 @@
-#include "goell_solver.hpp"
-#include "goell_matrix.hpp" // For assemble_Q, determinant_info, log10_sigma_rel
-#include <algorithm> // For std::min, std::max, std::sort, std::min_element
-#include <cmath>     // For isfinite, fabs
+#include "goell/solver.hpp"
+
+#include "goell/diagnostics.hpp"
+#include "goell/matrix.hpp"
+
+#include <algorithm>
+#include <cmath>
 
 double merit_value(const Params &P, double B, double Pprime)
 {
@@ -49,7 +52,7 @@ std::vector<Sample> local_minima(const std::vector<Sample> &samples)
     if (samples.size() < 2)
         return mins;
 
-    for (size_t i = 1; i + 1 < samples.size(); ++i)
+    for (std::size_t i = 1; i + 1 < samples.size(); ++i)
     {
         if (std::isfinite(samples[i].merit) &&
             samples[i].merit < samples[i - 1].merit &&
@@ -71,8 +74,11 @@ std::vector<Sample> edge_minima(const std::vector<Sample> &samples)
     if (std::isfinite(samples.front().merit) && samples.front().merit < samples[1].merit)
         mins.push_back(samples.front());
 
-    if (std::isfinite(samples.back().merit) && samples.back().merit < samples[samples.size() - 2].merit)
+    if (std::isfinite(samples.back().merit) &&
+        samples.back().merit < samples[samples.size() - 2].merit)
+    {
         mins.push_back(samples.back());
+    }
 
     return mins;
 }
@@ -86,13 +92,13 @@ std::vector<Sample> sign_change_roots(const Params &P, double B, const std::vect
     auto append_unique = [&](double pref)
     {
         const double clamped = std::min(1.0 - 1e-6, std::max(1e-6, pref));
-        if (!roots.empty() && fabs(roots.back().Pprime - clamped) < 1e-5)
+        if (!roots.empty() && std::fabs(roots.back().Pprime - clamped) < 1e-5)
             return;
         const auto info = determinant_value(P, B, clamped);
         roots.push_back({B, clamped, info.logabs});
     };
 
-    for (size_t i = 0; i + 1 < samples.size(); ++i)
+    for (std::size_t i = 0; i + 1 < samples.size(); ++i)
     {
         const auto &left = samples[i];
         const auto &right = samples[i + 1];
@@ -115,20 +121,41 @@ std::vector<Sample> sign_change_roots(const Params &P, double B, const std::vect
                 const double mid = 0.5 * (a + b);
                 const auto info_mid = determinant_value(P, B, mid);
 
-                if (info_mid.sign == 0) { a = b = mid; break; }
-                if (sa != 0 && sa != info_mid.sign) { b = mid; sb = info_mid.sign; }
-                else if (sb != 0 && sb != info_mid.sign) { a = mid; sa = info_mid.sign; }
-                else { break; }
+                if (info_mid.sign == 0)
+                {
+                    a = b = mid;
+                    break;
+                }
+
+                if (sa != 0 && sa != info_mid.sign)
+                {
+                    b = mid;
+                    sb = info_mid.sign;
+                }
+                else if (sb != 0 && sb != info_mid.sign)
+                {
+                    a = mid;
+                    sa = info_mid.sign;
+                }
+                else
+                {
+                    break;
+                }
             }
+
             append_unique(0.5 * (a + b));
         }
     }
+
     return roots;
 }
 
 double refine_local_minimum(const Params &P, double B, double x0)
 {
-    auto f = [&](double x) { return merit_value(P, B, std::min(1.0 - 1e-6, std::max(1e-6, x))); };
+    auto f = [&](double x)
+    {
+        return merit_value(P, B, std::min(1.0 - 1e-6, std::max(1e-6, x)));
+    };
 
     const double dx = 2.0 / static_cast<double>(P.Pscan + 1);
     double x1 = std::max(1e-6, x0 - dx);
@@ -137,17 +164,24 @@ double refine_local_minimum(const Params &P, double B, double x0)
 
     for (int it = 0; it < 20; ++it)
     {
-        const double y1 = f(x1), y2 = f(x2), y3 = f(x3);
+        const double y1 = f(x1);
+        const double y2 = f(x2);
+        const double y3 = f(x3);
         const double D = (x1 - x2) * (x1 - x3) * (x2 - x3);
-        if (fabs(D) < 1e-18) break;
+        if (std::fabs(D) < 1e-18)
+            break;
 
         const double A = (y1 * (x2 - x3) + y2 * (x3 - x1) + y3 * (x1 - x2)) / D;
-        const double Bc = (y1 * (x3 * x3 - x2 * x2) + y2 * (x1 * x1 - x3 * x3) + y3 * (x2 * x2 - x1 * x1)) / D;
+        const double Bc =
+            (y1 * (x3 * x3 - x2 * x2) + y2 * (x1 * x1 - x3 * x3) + y3 * (x2 * x2 - x1 * x1)) /
+            D;
 
-        if (fabs(A) < 1e-18) break;
+        if (std::fabs(A) < 1e-18)
+            break;
 
         const double xm = -Bc / (2.0 * A);
-        if (!std::isfinite(xm)) break;
+        if (!std::isfinite(xm))
+            break;
 
         const double xmid = std::min(x3, std::max(x1, xm));
         const double h = 0.6 * 0.5 * (x3 - x1);
@@ -155,5 +189,6 @@ double refine_local_minimum(const Params &P, double B, double x0)
         x2 = std::min(1.0 - 1e-6, std::max(1e-6, xmid));
         x3 = std::min(1.0 - 1e-6, xmid + h);
     }
+
     return x2;
 }

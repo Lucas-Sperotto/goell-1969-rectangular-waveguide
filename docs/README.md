@@ -28,6 +28,10 @@ Esta pasta concentra a traducao revisada do artigo de Goell, as notas permanente
 16. [05_agradecimentos.md](05_agradecimentos.md)
 17. [06_referencias.md](06_referencias.md)
 
+## Lista de Símbolos
+
+- [simbolos.md](simbolos.md): todos os símbolos do projeto — geometria, eletromagnetismo, variáveis normalizadas, funções especiais, blocos da matriz Q, vetor nulo e parâmetros do CLI — com correspondência artigo ↔ docs ↔ código C++.
+
 ## Materiais De Apoio
 
 - [referencias/01_expansoes_de_campo.md](referencias/01_expansoes_de_campo.md): folha rapida para expansoes, simetria e pontos de casamento.
@@ -41,4 +45,5 @@ Esta pasta concentra a traducao revisada do artigo de Goell, as notas permanente
 - Os arquivos `00` a `06` formam a traducao principal do artigo.
 - Os arquivos em `referencias/` sao notas auxiliares permanentes do repositorio.
 - A pasta [img](img/) guarda as figuras citadas na traducao.
+- O solver oficial correspondente a estes docs agora vive em `include/goell/`, `src/core/` e `src/main.cpp`, com wrappers publicos em `scripts/`.
 - O backlog tecnico foi consolidado em [../TODO.md](../TODO.md), para nao misturar pendencias de implementacao com a trilha de leitura.
