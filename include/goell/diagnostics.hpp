@@ -75,4 +75,10 @@ double log10_sigma_rel(const Eigen::MatrixXd &Q);
 // Usado quando --null-vector está ativo para classificar o modo [F3.1].
 NullInfo compute_null_info(const Params &P, double B, double Pprime);
 
+// Retorna o vetor nulo completo v (right singular vector de menor σ de Q).
+// v tem dimensão ncols = 4N (odd) ou 4N-2 (even).
+// v = [aₙ | bₙ | cₙ | dₙ]ᵀ com leiaute conforme ColumnLayout [F3.2].
+// Usado por compute_field_grid para avaliar os campos em pontos arbitrários.
+Eigen::VectorXd compute_null_vector(const Params &P, double B, double Pprime);
+
 #endif // GOELL_DIAGNOSTICS_HPP

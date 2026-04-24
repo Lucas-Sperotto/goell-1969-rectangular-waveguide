@@ -56,6 +56,7 @@ make check-cpp
 ./run.sh fig20
 ./run.sh validate
 python3 -m py_compile scripts/plot_compare.py scripts/reproduce_table1.py scripts/analyze_table1_variation.py scripts/validate_goell.py scripts/track_roots.py scripts/principal_modes.py scripts/sweep_principal_modes.py scripts/solver_api.py scripts/validate_bessel.py
+python3 scripts/field_map.py --parity odd --phase phi0 --a_over_b 1 --nr 1.5 --N 5 --field-B 2.5 --field-P 0.65 --field-nx 80 --field-ny 80 --field-margin 1.4 --output figures/field_HE11.png
 ```
 
 Se a sua mudanca mexer na camada numerica ou nos scripts, rode ao menos o build e a verificacao mais proxima do trecho afetado.

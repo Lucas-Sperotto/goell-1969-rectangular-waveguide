@@ -46,6 +46,7 @@ Este documento reúne as convenções do repositório e o roteiro de evolução 
 | Secao II - formulacao teorica | `src/core/matrix.cpp`, `src/core/boundary.cpp`, `src/core/layout.cpp`, `docs/02_derivacao_das_equacoes.md`, `docs/02.1_efeitos_da_simetria.md` a `docs/02.7_metodo_de_computacao.md` |
 | Secao III - resultados | `run.sh`, `scripts/plot_compare.py`, `scripts/validate_goell.py`, `docs/03_resultados_do_calculo.md`, `docs/03.1_precisao.md`, `docs/03.2_configuracoes_modais.md`, `docs/03.3_curvas_de_propagacao.md` |
 | Tabela I | `scripts/reproduce_table1.py`, `scripts/analyze_table1_variation.py`, `docs/referencias/04_notas_sobre_a_tabela_1.md` |
+| Figs. 4-15 / mapas de campo | `src/core/field.cpp`, `include/goell/field.hpp`, `src/core/diagnostics.cpp`, `scripts/field_map.py`, `docs/02.5_diferencas_entre_as_funcoes_de_campo_eletrico_e_magnetico.md` |
 | Modos principais e Figs. 20-22 | `scripts/principal_modes.py`, `scripts/sweep_principal_modes.py`, `run.sh`, `docs/03.3_curvas_de_propagacao.md` |
 | Arquitetura atual do solver | `include/goell/*.hpp`, `src/main.cpp`, `src/core/*.cpp`, `memory/project_refactoring_phase2.md` |
 | Conferencia de notacao e OCR | `docs/referencias/03_checklist_de_conferencia.md` |
@@ -66,6 +67,7 @@ SWEEP_REUSE_EXISTING=1 ./run.sh fig22
 python3 scripts/analyze_table1_variation.py
 python3 scripts/validate_goell.py --stability-figures fig16 fig17 --det-search sign
 python3 scripts/validate_bessel.py
+python3 scripts/field_map.py --parity odd --phase phi0 --a_over_b 1 --nr 1.5 --N 5 --field-B 2.5 --field-P 0.65 --field-nx 80 --field-ny 80 --field-margin 1.4 --output figures/field_HE11.png
 ```
 
 ## Roteiro de evolucao
@@ -74,7 +76,7 @@ A sequencia recomendada de proximas contribuicoes, em ordem de prioridade, conti
 
 1. Consolidar a leitura fisica e a identificacao modal final das curvas exportadas nas Figs. 16-19.
 2. Refinar a rotulagem fisica dos modos principais nas Figs. 20-22.
-3. Implementar a etapa de campos das Figs. 4-15 com calculo em `C++` e plotagem via CSV em Python.
+3. Validar os mapas de campo exportados contra as Figs. 4-15 e fechar presets canonicos para esses casos.
 4. Resolver a nota de reescalonamento da p. 2144 sem perder rastreabilidade com o paper.
 
 ## Avancos recentes
@@ -87,6 +89,7 @@ A sequencia recomendada de proximas contribuicoes, em ordem de prioridade, conti
 - As Figs. 16-19 ja possuem pipeline de CSV bruto, CSV estavel, CSV rastreado e figura final.
 - As Figs. 20-22 ja possuem sweep dos modos principais, com retomada opcional via `SWEEP_REUSE_EXISTING=1`.
 - O repositório agora tambem seleciona e exporta os dois modos principais em sweeps parametricos, preparando a reproducao das Figs. 20-22.
+- O solver agora tambem exporta grades de campo 2D por `--field-map`, com plotagem desacoplada em `scripts/field_map.py`.
 
 ## O que não fazer cedo demais
 

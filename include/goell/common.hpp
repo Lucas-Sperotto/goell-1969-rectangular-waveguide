@@ -131,6 +131,17 @@ struct Params
     bool   dump_det_sign = false; // incluir coluna det_sign no dump_scan
     bool   test_bessel   = false; // tabela de validação das funções de Bessel
     bool   null_vector   = false; // incluir Ez_frac, Hz_frac, mode_class no CSV [F3.1]
+
+    // ── Modo de mapa de campo [F3.2] ──────────────────────────────────────
+    // Ativo com --field-map: amostras Ez, Hz, Ex, Ey, Hx, Hy numa grade (x,y)
+    // para um par (B, P') específico de um modo já localizado.
+    // Saída: CSV com 12 colunas por ponto de grade.  Ver docs/simbolos.md §"CSV campo".
+    bool   field_map    = false; // ativa modo de mapa de campo transversal
+    double field_B      = 1.0;  // frequência normalizada B do modo  [Eq. 6]
+    double field_Pprime = 0.5;  // constante de propagação P' do modo [Eq. 6]
+    int    field_nx     = 60;   // pontos de grade em x
+    int    field_ny     = 60;   // pontos de grade em y
+    double field_margin = 1.5;  // extensão espacial = margin × meia-largura do núcleo
 };
 
 // Conversores de enum → string (usados nas colunas do CSV de saída).

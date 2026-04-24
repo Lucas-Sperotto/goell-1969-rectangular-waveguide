@@ -31,13 +31,14 @@ Este repositorio foi montado justamente para tornar esse caminho legivel, verifi
 
 - [run.sh](run.sh): interface publica oficial para build, Tabela I, Figs. 16-19, validacao e rodada completa.
 - [src/main.cpp](src/main.cpp): entrypoint enxuto do solver, dedicado apenas a parsear CLI e orquestrar a exportacao.
-- [src/core/](src/core): implementacao C++17 modular do solver, separada por responsabilidade (`cli`, `layout`, `boundary`, `matrix`, `diagnostics`, `solver`, `output`).
+- [src/core/](src/core): implementacao C++17 modular do solver, separada por responsabilidade (`cli`, `layout`, `boundary`, `matrix`, `diagnostics`, `field`, `solver`, `output`).
 - [include/goell/](include/goell): interfaces publicas dos modulos C++ do solver.
 - [src/presets.sh](src/presets.sh): shim de compatibilidade para encaminhar chamadas antigas ao `run.sh`.
 - [scripts/](scripts): wrappers publicos e scripts shell de orquestracao.
 - [scripts/lib/](scripts/lib), [scripts/pipelines/](scripts/pipelines), [scripts/plotting/](scripts/plotting), [scripts/tracking/](scripts/tracking) e [scripts/validation/](scripts/validation): implementacao Python interna, agora organizada por responsabilidade.
 - [scripts/solver_api.py](scripts/solver_api.py): wrapper de compatibilidade para a API centralizada que chama `build/goell_q_solver`.
 - [scripts/validate_bessel.py](scripts/validate_bessel.py): wrapper de compatibilidade para a validacao das funcoes de Bessel contra `scipy.special`.
+- [scripts/field_map.py](scripts/field_map.py): geracao de mapas de campo 2D a partir do modo exportado pelo solver com `--field-map`.
 - [Makefile](Makefile): build oficial incremental do solver modular em `src/` com headers em `include/`.
 - [memory/](memory): notas historicas da migracao; nao e mais fonte oficial de codigo C++.
 
@@ -96,6 +97,7 @@ No fluxo atual:
 - as Figs. 16-19 passam por exportacao bruta, filtragem por estabilidade em `N={5,7,9}` e rastreamento por continuidade em `B`;
 - o caso `even` com `a/b != 1` usa por padrao a regra de matching descrita no paper, mas aceita uma variante diagnostica `square-split`;
 - as Figs. 20-22 agora usam um pipeline separado para os dois modos principais, selecionados como os ramos `odd/phi0` e `odd/phi90` de menor cutoff apos estabilidade em `N`;
+- o solver tambem exporta grades 2D de campo via `--field-map`, e `scripts/field_map.py` gera paineis para `Ez`, `Hz`, `|E_t|`, `|H_t|` e direcoes transversais;
 - os artefatos finais ficam separados entre `out/` e `figures/`.
 
 ## O Que Ja Esta Bem Encaminhado
@@ -106,6 +108,7 @@ No fluxo atual:
 - a reproducao automatizada da Tabela I com meta numerica objetiva;
 - o fluxo publico `sh -> C++ -> Python` para as Figs. 16-19;
 - o sweep dos modos principais para as Figs. 20-22;
+- a exportacao exploratoria de mapas de campo em grade 2D;
 - a exportacao de CSVs brutos, estaveis e rastreados;
 - a documentacao das equacoes e da narrativa fisica do artigo.
 
@@ -114,10 +117,11 @@ No fluxo atual:
 - tratamento fino do setor `even`, que continua mais sensivel;
 - refinamento da identificacao modal final e da leitura fisica das curvas das Figs. 16-19;
 - rotulagem fisica final dos modos principais nas Figs. 20-22;
-- implementacao futura dos mapas de campo das Figs. 4-15;
+- validacao cientifica dos mapas de campo contra as Figs. 4-15 do artigo;
+- definicao dos presets canonicos e da narrativa fisica final para os mapas de campo;
 - interpretacao final da nota de reescalonamento da p. 2144.
 
-Em outras palavras: o repositorio ja esta num ponto em que a dificuldade principal nao e mais "montar alguma versao do metodo", e sim "fazer a reproducao numerica convergir para os mesmos ramos do artigo".
+Em outras palavras: o repositorio ja passou da fase "montar alguma versao do metodo". Hoje ele esta pronto para estudo, manutencao, reproducao automatizada da Tabela I, curvas das Figs. 16-22 e exportacao exploratoria de campos. O que ainda nao esta fechado e a validacao cientifica final de todos os ramos e mapas do artigo.
 
 ## Como Compilar
 
@@ -164,6 +168,7 @@ Fluxo publico principal:
 ./run.sh validate
 ./run.sh all-core
 ./run.sh all-curves
+python3 scripts/field_map.py --parity odd --phase phi0 --a_over_b 1 --nr 1.5 --N 5 --field-B 2.5 --field-P 0.65 --field-nx 80 --field-ny 80 --field-margin 1.4 --output figures/field_HE11.png
 ```
 
 `src/presets.sh` continua existindo apenas como compatibilidade para chamadas antigas.

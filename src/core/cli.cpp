@@ -159,6 +159,12 @@ void parse_args(int argc, char **argv, Params &P)
         else if (arg == "--no-rescale")          P.rescale_matrix = false;
         else if (arg == "--test-bessel")         P.test_bessel = true;
         else if (arg == "--null-vector")         P.null_vector = true; // [F3.1]
+        else if (arg == "--field-map")           P.field_map = true;   // [F3.2]
+        else if (arg == "--field-B")             next_double(P.field_B);
+        else if (arg == "--field-P")             next_double(P.field_Pprime);
+        else if (arg == "--field-nx")            next_int(P.field_nx);
+        else if (arg == "--field-ny")            next_int(P.field_ny);
+        else if (arg == "--field-margin")        next_double(P.field_margin);
 
         // ── Modos de diagnóstico ──────────────────────────────��──────────
         else if (arg == "--dump-scan")

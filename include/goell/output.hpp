@@ -34,4 +34,10 @@ void write_dump_scan_csv(std::ostream &out, const Params &P);
 // branch_id = índice do candidato por valor de B (começa em 0).
 void write_root_csv(std::ostream &out, const Params &P);
 
+// Escreve o mapa de campo 2D para o modo especificado por (P.field_B, P.field_Pprime).
+// Colunas: x, y, inside, Ez, Hz, Er, Etheta, Hr, Htheta, Ex, Ey, Hx, Hy
+// "inside" = 1 (interior do núcleo) ou 0 (exterior).
+// Todos os campos normalizados pelo pico de |Ez| ou |Hz| no interior.
+void write_field_map_csv(std::ostream &out, const Params &P);
+
 #endif // GOELL_OUTPUT_HPP

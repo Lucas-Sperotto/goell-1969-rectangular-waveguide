@@ -23,6 +23,7 @@
 
 #include "goell/bessel.hpp"
 #include "goell/diagnostics.hpp"
+#include "goell/field.hpp"
 #include "goell/matrix.hpp"
 #include "goell/solver.hpp"
 
@@ -185,5 +186,26 @@ void write_root_csv(std::ostream &out, const Params &P)
 
             out << "\n";
         }
+    }
+}
+
+// Escreve o mapa de campo 2D para o modo (P.field_B, P.field_Pprime).
+// Chama compute_field_grid (todos os cálculos em C++) e serializa o resultado.
+// O Python apenas lê este CSV e plota — nenhum cálculo de campo no Python.
+void write_field_map_csv(std::ostream &out, const Params &P)
+{
+    out << "x,y,inside,Ez,Hz,Er,Etheta,Hr,Htheta,Ex,Ey,Hx,Hy\n";
+
+    const auto grid = compute_field_grid(P, P.field_B, P.field_Pprime);
+
+    for (const auto &fp : grid)
+    {
+        out << fp.x      << "," << fp.y      << ","
+            << (fp.inside ? 1 : 0)           << ","
+            << fp.Ez     << "," << fp.Hz     << ","
+            << fp.Er     << "," << fp.Etheta << ","
+            << fp.Hr     << "," << fp.Htheta << ","
+            << fp.Ex     << "," << fp.Ey     << ","
+            << fp.Hx     << "," << fp.Hy     << "\n";
     }
 }

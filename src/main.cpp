@@ -35,6 +35,7 @@
 #include "goell/cli.hpp"
 #include "goell/common.hpp"
 #include "goell/output.hpp"
+#include "goell/field.hpp"
 
 int main(int argc, char **argv)
 {
@@ -69,6 +70,14 @@ int main(int argc, char **argv)
     if (P.dump_scan)
     {
         write_dump_scan_csv(std::cout, P);
+        return 0;
+    }
+
+    // Modo de mapa de campo [F3.2]: avalia Ez, Hz, Et, Ht numa grade 2D para
+    // um modo específico (field_B, field_Pprime).  Todos os cálculos em C++.
+    if (P.field_map)
+    {
+        write_field_map_csv(std::cout, P);
         return 0;
     }
 

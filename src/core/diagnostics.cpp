@@ -176,3 +176,15 @@ NullInfo compute_null_info(const Params &P, double B, double Pprime)
 
     return info;
 }
+
+// Retorna o vetor singular direito de menor σ de Q — o "vetor nulo" da matriz.
+// Reutiliza a mesma decomposição JacobiSVD de compute_null_info, mas expõe o
+// vetor completo para que field.cpp possa avaliar os campos em pontos arbitrários.
+// v = [aₙ | bₙ | cₙ | dₙ]ᵀ com leiaute conforme ColumnLayout.
+VectorXd compute_null_vector(const Params &P, double B, double Pprime)
+{
+    const MatrixXd Q = assemble_Q(P, B, Pprime);
+    JacobiSVD<MatrixXd> svd(Q, ComputeThinV);
+    // Última coluna de matrixV() = vetor singular de menor σ (SVD em ordem decrescente).
+    return svd.matrixV().col(svd.matrixV().cols() - 1);
+}
